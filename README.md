@@ -1,6 +1,6 @@
 # libusb
 
-Go bindings for the [libusb][] C library.
+Go bindings for the [libusb C library][libusb-c].
 
 [![GoDoc][godoc image]][godoc link]
 
@@ -63,6 +63,7 @@ $ go tool cover -html coverage.out
 [godoc image]: https://godoc.org/github.com/gotmc/libusb?status.svg
 [godoc link]: https://godoc.org/github.com/gotmc/libusb
 [libusb]: https://github.com/gotmc/libusb
+[libusb-c]: http://libusb.info
 [LICENSE.txt]: https://github.com/gotmc/libusb/blob/master/LICENSE.txt
 [pull request]: https://help.github.com/articles/using-pull-requests
 [Scott Chacon]: http://scottchacon.com/about.html
