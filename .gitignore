@@ -22,3 +22,7 @@ _testmain.go
 *.exe
 *.test
 *.prof
+
+
+# Ignore the covrage analyses
+coverage.out
