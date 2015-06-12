@@ -14,14 +14,14 @@ import "C"
 import "fmt"
 
 // Context represents a libusb session/context.
-type Context struct {
+type context struct {
 	context *C.libusb_context
 }
 
 // Init intializes a new libusb session/context by creating a new Context and
 // returning a pointer to that Context.
-func Init() (*Context, error) {
-	newContext := &Context{}
+func Init() (*context, error) {
+	newContext := &context{}
 	errnum := C.libusb_init(&newContext.context)
 	if errnum != 0 {
 		return nil, fmt.Errorf(
@@ -31,7 +31,7 @@ func Init() (*Context, error) {
 }
 
 // Exit deinitializes the libusb session/context.
-func (ctx *Context) Exit() error {
+func (ctx *context) Exit() error {
 	C.libusb_exit(ctx.context)
 	ctx = nil
 	return nil

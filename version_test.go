@@ -8,7 +8,7 @@ func TestGetVersion(t *testing.T) {
 	const micro = 19
 	const nano = 10903
 	releaseCandidate := ""
-	describe := "h"
+	describe := "http://libusb.info"
 	version := GetVersion()
 	if version.Major != major {
 		t.Errorf(

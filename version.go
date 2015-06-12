@@ -8,7 +8,6 @@ package libusb
 // #cgo pkg-config: libusb-1.0
 // #include <libusb.h>
 import "C"
-import "strings"
 
 // The Version struct represents the libusb version.
 type version struct {
@@ -29,9 +28,8 @@ func GetVersion() version {
 		Minor:            uint16(cVersion.minor),
 		Micro:            uint16(cVersion.micro),
 		Nano:             uint16(cVersion.nano),
-		ReleaseCandidate: string(*cVersion.rc),
-		Describe:         string(*cVersion.describe),
+		ReleaseCandidate: C.GoString(cVersion.rc),
+		Describe:         C.GoString(cVersion.describe),
 	}
-	version.ReleaseCandidate = strings.TrimRight(version.ReleaseCandidate, "\x00")
 	return version
 }
