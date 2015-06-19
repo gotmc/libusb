@@ -10,43 +10,45 @@ package libusb
 import "C"
 import "fmt"
 
-type libusbError int
+// ErrorCode is the tyep for the libusb_error C enum.
+type ErrorCode int
 
-// Error implements the Go error interface for libusbError.
-func (err libusbError) Error() string {
+// Error implements the Go error interface for ErrorCode.
+func (err ErrorCode) Error() string {
 	return fmt.Sprintf("%v: %v",
-		errorName(err),
-		strError(err),
+		ErrorName(err),
+		StrError(err),
 	)
 }
 
-// errorName implements the libusb_error_name function.
-func errorName(err libusbError) string {
+// ErrorName implements the libusb_error_name function.
+func ErrorName(err ErrorCode) string {
 	return C.GoString(C.libusb_error_name(C.int(err)))
 }
 
-// strerror implements the libusb_strerror function.
-func strError(err libusbError) string {
+// StrError implements the libusb_strerror function.
+func StrError(err ErrorCode) string {
 	return C.GoString(C.libusb_strerror(int32(err)))
 }
 
-func SetLocale(locale string) libusbError {
-	return libusbError(C.libusb_setlocale(C.CString(locale)))
+// SetLocale sets the locale for libusb errors.
+func SetLocale(locale string) ErrorCode {
+	return ErrorCode(C.libusb_setlocale(C.CString(locale)))
 }
 
 const (
-	success           libusbError = C.LIBUSB_SUCCESS
-	errorIo           libusbError = C.LIBUSB_ERROR_IO
-	errorInvalidParam libusbError = C.LIBUSB_ERROR_INVALID_PARAM
-	errorAccess       libusbError = C.LIBUSB_ERROR_ACCESS
-	errorNoDevice     libusbError = C.LIBUSB_ERROR_NO_DEVICE
-	errorNotFound     libusbError = C.LIBUSB_ERROR_NOT_FOUND
-	errorBusy         libusbError = C.LIBUSB_ERROR_BUSY
-	errorTimeout      libusbError = C.LIBUSB_ERROR_TIMEOUT
-	errorOverflow     libusbError = C.LIBUSB_ERROR_OVERFLOW
-	errorPipe         libusbError = C.LIBUSB_ERROR_PIPE
-	errorInterrupted  libusbError = C.LIBUSB_ERROR_INTERRUPTED
-	errorNoMem        libusbError = C.LIBUSB_ERROR_NO_MEM
-	errorNotSupported libusbError = C.LIBUSB_ERROR_NOT_SUPPORTED
-	errorOther        libusbError = C.LIBUSB_ERROR_OTHER
+	success           ErrorCode = C.LIBUSB_SUCCESS
+	errorIo           ErrorCode = C.LIBUSB_ERROR_IO
+	errorInvalidParam ErrorCode = C.LIBUSB_ERROR_INVALID_PARAM
+	errorAccess       ErrorCode = C.LIBUSB_ERROR_ACCESS
+	errorNoDevice     ErrorCode = C.LIBUSB_ERROR_NO_DEVICE
+	errorNotFound     ErrorCode = C.LIBUSB_ERROR_NOT_FOUND
+	errorBusy         ErrorCode = C.LIBUSB_ERROR_BUSY
+	errorTimeout      ErrorCode = C.LIBUSB_ERROR_TIMEOUT
+	errorOverflow     ErrorCode = C.LIBUSB_ERROR_OVERFLOW
+	errorPipe         ErrorCode = C.LIBUSB_ERROR_PIPE
+	errorInterrupted  ErrorCode = C.LIBUSB_ERROR_INTERRUPTED
+	errorNoMem        ErrorCode = C.LIBUSB_ERROR_NO_MEM
+	errorNotSupported ErrorCode = C.LIBUSB_ERROR_NOT_SUPPORTED
+	errorOther        ErrorCode = C.LIBUSB_ERROR_OTHER
 )
