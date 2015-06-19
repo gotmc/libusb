@@ -12,15 +12,26 @@ import "fmt"
 
 type libusbError int
 
+// Error implements the Go error interface for libusbError.
 func (err libusbError) Error() string {
-	return fmt.Sprintf("libusb error code %d: %s", err, errorName(err))
+	return fmt.Sprintf("%v: %v",
+		errorName(err),
+		strError(err),
+	)
 }
 
+// errorName implements the libusb_error_name function.
 func errorName(err libusbError) string {
-	if errorString, ok := libusbErrorMap[err]; ok {
-		return errorString
-	}
-	return "UNKNOWN"
+	return C.GoString(C.libusb_error_name(C.int(err)))
+}
+
+// strerror implements the libusb_strerror function.
+func strError(err libusbError) string {
+	return C.GoString(C.libusb_strerror(int32(err)))
+}
+
+func SetLocale(locale string) libusbError {
+	return libusbError(C.libusb_setlocale(C.CString(locale)))
 }
 
 const (
@@ -39,20 +50,3 @@ const (
 	errorNotSupported libusbError = C.LIBUSB_ERROR_NOT_SUPPORTED
 	errorOther        libusbError = C.LIBUSB_ERROR_OTHER
 )
-
-var libusbErrorMap = map[libusbError]string{
-	C.LIBUSB_SUCCESS:             "Success (no error)",
-	C.LIBUSB_ERROR_IO:            "Input/output error.",
-	C.LIBUSB_ERROR_INVALID_PARAM: "Invalid parameter.",
-	C.LIBUSB_ERROR_ACCESS:        "Access denied (insufficient permissions)",
-	C.LIBUSB_ERROR_NO_DEVICE:     "No such device (it may have been disconnected)",
-	C.LIBUSB_ERROR_NOT_FOUND:     "Entity not found.",
-	C.LIBUSB_ERROR_BUSY:          "Resource busy.",
-	C.LIBUSB_ERROR_TIMEOUT:       "Operation timed out.",
-	C.LIBUSB_ERROR_OVERFLOW:      "Overflow.",
-	C.LIBUSB_ERROR_PIPE:          "Pipe error.",
-	C.LIBUSB_ERROR_INTERRUPTED:   "System call interrupted (perhaps due to signal)",
-	C.LIBUSB_ERROR_NO_MEM:        "Insufficient memory.",
-	C.LIBUSB_ERROR_NOT_SUPPORTED: "Operation not supported or unimplemented on this platform.",
-	C.LIBUSB_ERROR_OTHER:         "Other error.",
-}
