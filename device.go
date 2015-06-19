@@ -35,6 +35,26 @@ func (speed libusbSpeed) String() string {
 	return speedCodes[speed]
 }
 
+type supportedSpeed int
+
+const (
+	lowSpeedOperation   supportedSpeed = C.LIBUSB_LOW_SPEED_OPERATION
+	fullSpeedOperation  supportedSpeed = C.LIBUSB_FULL_SPEED_OPERATION
+	highSpeedOperation  supportedSpeed = C.LIBUSB_HIGH_SPEED_OPERATION
+	superSpeedOperation supportedSpeed = C.LIBUSB_SUPER_SPEED_OPERATION
+)
+
+var supportedSpeedMap = map[supportedSpeed]string{
+	lowSpeedOperation:   "Low speed operation supported (1.5MBit/s).",
+	fullSpeedOperation:  "Full speed operation supported (12MBit/s).",
+	highSpeedOperation:  "High speed operation supported (480MBit/s).",
+	superSpeedOperation: "Superspeed operation supported (5000MBit/s).",
+}
+
+func (speed supportedSpeed) String() string {
+	return supportedSpeedMap[speed]
+}
+
 type device struct {
 	libusbDevice *C.libusb_device
 }
