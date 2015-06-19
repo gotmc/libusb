@@ -21,6 +21,19 @@ func main() {
 		version.Nano,
 	)
 	ctx, _ := libusb.Init()
+	fmt.Println("Made it past libusb.Init()")
+	devices, _ := ctx.GetDeviceList()
+	fmt.Printf("Found %v USB devices.\n", len(devices))
+	for _, usbDevice := range devices {
+		deviceAddress, _ := usbDevice.GetDeviceAddress()
+		deviceSpeed, _ := usbDevice.GetDeviceSpeed()
+		busNumber, _ := usbDevice.GetBusNumber()
+		fmt.Printf("Device address %v is on bus number %v. %v\n",
+			deviceAddress,
+			busNumber,
+			deviceSpeed,
+		)
+	}
 	ctx.Exit()
 
 }
