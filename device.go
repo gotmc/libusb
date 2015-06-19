@@ -9,9 +9,12 @@ package libusb
 // #include <libusb.h>
 import "C"
 import (
+	"fmt"
 	"reflect"
 	"unsafe"
 )
+
+// TODO(mdr): Do I need to be hadnling the reference counts in cgo?
 
 type speed int
 
@@ -57,6 +60,10 @@ func (speed supportedSpeed) String() string {
 
 type device struct {
 	libusbDevice *C.libusb_device
+}
+
+type deviceHandle struct {
+	libusbDeviceHandle *C.libusb_device_handle
 }
 
 func (ctx *context) GetDeviceList() ([]*device, error) {
@@ -105,4 +112,37 @@ func (dev *device) GetDeviceSpeed() (speed, error) {
 		return 0, err
 	}
 	return speed(deviceSpeed), nil
+}
+
+func (dev *device) Open() (*deviceHandle, error) {
+	var handle **C.libusb_device_handle
+	err := C.libusb_open(dev.libusbDevice, handle)
+	if err != 0 {
+		return nil, ErrorCode(err)
+	}
+	deviceHandle := deviceHandle{
+		libusbDeviceHandle: *handle,
+	}
+
+	return &deviceHandle, nil
+}
+
+func (devHandle *deviceHandle) Close() error {
+	C.libusb_close(devHandle.libusbDeviceHandle)
+	return nil
+}
+
+func (ctx *context) OpenDeviceWithVendorProduct(vendorId, productId uint16) (*deviceHandle, error) {
+	// var handle **C.libusb_device_handle
+	handle := C.libusb_open_device_with_vid_pid(ctx.context, C.uint16_t(vendorId), C.uint16_t(productId))
+	if handle == nil {
+		return nil, fmt.Errorf("Could not open USB device %v:%v",
+			vendorId,
+			productId,
+		)
+	}
+	deviceHandle := deviceHandle{
+		libusbDeviceHandle: handle,
+	}
+	return &deviceHandle, nil
 }

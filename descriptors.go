@@ -145,9 +145,9 @@ type deviceDescriptor struct {
 	VendorID          uint16
 	ProductID         uint16
 	BcdDevice         uint16
-	Manufacturer      uint8
-	Product           string
-	SerialNumber      uint8
+	ManufacturerIndex uint8
+	ProductIndex      uint8
+	SerialNumberIndex uint8
 	NumConfiguraitons uint8
 }
 
@@ -158,14 +158,20 @@ func (dev *device) GetDeviceDescriptor() (*deviceDescriptor, error) {
 		return nil, ErrorCode(err)
 	}
 	descriptor := deviceDescriptor{
-		Length:         uint8(desc.bLength),
-		DescriptorType: descriptorType(desc.bDescriptorType),
-		BcdUSB:         uint16(desc.bcdUSB),
-		DeviceClass:    classCode(desc.bDeviceClass),
-		DeviceSubClass: uint8(desc.bDeviceSubClass),
-		VendorID:       uint16(desc.idVendor),
-		ProductID:      uint16(desc.idProduct),
-		SerialNumber:   uint8(desc.iSerialNumber),
+		Length:            uint8(desc.bLength),
+		DescriptorType:    descriptorType(desc.bDescriptorType),
+		BcdUSB:            uint16(desc.bcdUSB),
+		DeviceClass:       classCode(desc.bDeviceClass),
+		DeviceSubClass:    uint8(desc.bDeviceSubClass),
+		DeviceProtocol:    uint8(desc.bDeviceProtocol),
+		MaxPacketSize0:    uint8(desc.bMaxPacketSize0),
+		VendorID:          uint16(desc.idVendor),
+		ProductID:         uint16(desc.idProduct),
+		BcdDevice:         uint16(desc.bcdDevice),
+		ManufacturerIndex: uint8(desc.iManufacturer),
+		ProductIndex:      uint8(desc.iProduct),
+		SerialNumberIndex: uint8(desc.iSerialNumber),
+		NumConfiguraitons: uint8(desc.bNumConfigurations),
 	}
 	return &descriptor, nil
 }

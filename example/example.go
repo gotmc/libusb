@@ -40,6 +40,9 @@ func main() {
 			deviceDescriptor.DeviceClass,
 		)
 	}
+	fmt.Println("Let's open the Agilent 33220A")
+	agilent, _ := ctx.OpenDeviceWithVendorProduct(2391, 1031)
+	agilent.Close()
 	ctx.Exit()
 
 }
