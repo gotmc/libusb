@@ -45,7 +45,7 @@ func (ctx *context) GetDeviceList() ([]*device, error) {
 	const unrefDevices = 1
 	numDevicesFound := int(C.libusb_get_device_list(ctx.context, &list))
 	if numDevicesFound < 0 {
-		return nil, libusbError(numDevicesFound)
+		return nil, ErrorCode(numDevicesFound)
 	}
 	defer C.libusb_free_device_list(list, unrefDevices)
 	var libusbDevices []*C.libusb_device

@@ -7,7 +7,7 @@ package libusb
 
 import "fmt"
 
-func ExampleErrorName() {
+func ExampleError() {
 	SetLocale("en")
 	fmt.Println(success.Error())
 	fmt.Println(errorIo.Error())
