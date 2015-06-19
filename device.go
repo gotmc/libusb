@@ -13,17 +13,17 @@ import (
 	"unsafe"
 )
 
-type libusbSpeed int
+type speed int
 
 const (
-	speedUnknown libusbSpeed = C.LIBUSB_SPEED_UNKNOWN
-	speedLow     libusbSpeed = C.LIBUSB_SPEED_LOW
-	speedFull    libusbSpeed = C.LIBUSB_SPEED_FULL
-	speedHigh    libusbSpeed = C.LIBUSB_SPEED_HIGH
-	speedSuper   libusbSpeed = C.LIBUSB_SPEED_SUPER
+	speedUnknown speed = C.LIBUSB_SPEED_UNKNOWN
+	speedLow     speed = C.LIBUSB_SPEED_LOW
+	speedFull    speed = C.LIBUSB_SPEED_FULL
+	speedHigh    speed = C.LIBUSB_SPEED_HIGH
+	speedSuper   speed = C.LIBUSB_SPEED_SUPER
 )
 
-var speedCodes = map[libusbSpeed]string{
+var speedCodes = map[speed]string{
 	speedUnknown: "The OS doesn't report or know the device speed.",
 	speedLow:     "The device is operating at low speed (1.5MBit/s)",
 	speedFull:    "The device is operating at full speed (12MBit/s)",
@@ -31,7 +31,7 @@ var speedCodes = map[libusbSpeed]string{
 	speedSuper:   "The device is operating at super speed (5000MBit/s)",
 }
 
-func (speed libusbSpeed) String() string {
+func (speed speed) String() string {
 	return speedCodes[speed]
 }
 
@@ -44,7 +44,7 @@ const (
 	superSpeedOperation supportedSpeed = C.LIBUSB_SUPER_SPEED_OPERATION
 )
 
-var supportedSpeedMap = map[supportedSpeed]string{
+var supportedSpeeds = map[supportedSpeed]string{
 	lowSpeedOperation:   "Low speed operation supported (1.5MBit/s).",
 	fullSpeedOperation:  "Full speed operation supported (12MBit/s).",
 	highSpeedOperation:  "High speed operation supported (480MBit/s).",
@@ -52,7 +52,7 @@ var supportedSpeedMap = map[supportedSpeed]string{
 }
 
 func (speed supportedSpeed) String() string {
-	return supportedSpeedMap[speed]
+	return supportedSpeeds[speed]
 }
 
 type device struct {
@@ -99,10 +99,10 @@ func (dev *device) GetDeviceAddress() (uint, error) {
 	return uint(deviceAddress), nil
 }
 
-func (dev *device) GetDeviceSpeed() (libusbSpeed, error) {
+func (dev *device) GetDeviceSpeed() (speed, error) {
 	deviceSpeed, err := C.libusb_get_device_speed(dev.libusbDevice)
 	if err != nil {
 		return 0, err
 	}
-	return libusbSpeed(deviceSpeed), nil
+	return speed(deviceSpeed), nil
 }

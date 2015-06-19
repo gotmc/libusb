@@ -28,10 +28,16 @@ func main() {
 		deviceAddress, _ := usbDevice.GetDeviceAddress()
 		deviceSpeed, _ := usbDevice.GetDeviceSpeed()
 		busNumber, _ := usbDevice.GetBusNumber()
+		deviceDescriptor, _ := usbDevice.GetDeviceDescriptor()
 		fmt.Printf("Device address %v is on bus number %v. %v\n",
 			deviceAddress,
 			busNumber,
 			deviceSpeed,
+		)
+		fmt.Printf("\tVendor: %v \tProduct: %v \tClass: %v\n",
+			deviceDescriptor.VendorID,
+			deviceDescriptor.ProductID,
+			deviceDescriptor.DeviceClass,
 		)
 	}
 	ctx.Exit()
