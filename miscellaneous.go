@@ -10,7 +10,7 @@ package libusb
 import "C"
 import "fmt"
 
-// ErrorCode is the tyep for the libusb_error C enum.
+// ErrorCode is the type for the libusb_error C enum.
 type ErrorCode int
 
 // Error implements the Go error interface for ErrorCode.
