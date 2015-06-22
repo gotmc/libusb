@@ -163,28 +163,3 @@ type deviceDescriptor struct {
 	SerialNumberIndex   uint8
 	NumConfigurations   uint8
 }
-
-func (dev *device) GetDeviceDescriptor() (*deviceDescriptor, error) {
-	var desc C.struct_libusb_device_descriptor
-	err := C.libusb_get_device_descriptor(dev.libusbDevice, &desc)
-	if err != 0 {
-		return nil, ErrorCode(err)
-	}
-	descriptor := deviceDescriptor{
-		Length:              uint8(desc.bLength),
-		DescriptorType:      descriptorType(desc.bDescriptorType),
-		USBSpecification:    bcd(desc.bcdUSB),
-		DeviceClass:         classCode(desc.bDeviceClass),
-		DeviceSubClass:      byte(desc.bDeviceSubClass),
-		DeviceProtocol:      byte(desc.bDeviceProtocol),
-		MaxPacketSize0:      uint8(desc.bMaxPacketSize0),
-		VendorID:            uint16(desc.idVendor),
-		ProductID:           uint16(desc.idProduct),
-		DeviceReleaseNumber: bcd(desc.bcdDevice),
-		ManufacturerIndex:   uint8(desc.iManufacturer),
-		ProductIndex:        uint8(desc.iProduct),
-		SerialNumberIndex:   uint8(desc.iSerialNumber),
-		NumConfigurations:   uint8(desc.bNumConfigurations),
-	}
-	return &descriptor, nil
-}

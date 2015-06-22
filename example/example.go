@@ -44,9 +44,10 @@ func main() {
 			deviceDescriptor.ProductID,
 			deviceDescriptor.DeviceClass,
 		)
-		fmt.Printf("\tUSB: %v\tRelease Num: %v\n",
+		fmt.Printf("\tUSB: %v\tRelease Num: %v\tSN Index: %v\n",
 			deviceDescriptor.USBSpecification,
 			deviceDescriptor.DeviceReleaseNumber,
+			deviceDescriptor.SerialNumberIndex,
 		)
 	}
 	fmt.Println("Let's open the Agilent 33220A")
@@ -54,8 +55,15 @@ func main() {
 	if err != nil {
 		fmt.Println("Couldn't find the Agilent 33220A")
 	} else {
-		fmt.Println("Found the Agilent 33220A")
 		defer agilent.Close()
+		serialnum, _ := agilent.GetStringDescriptorAscii(
+			agilent.DeviceDescriptor.SerialNumberIndex,
+		)
+		fmt.Printf("Found Agilent 3322A S/N %s\n", serialnum)
+		fmt.Println(agilent.GetStringDescriptorAscii(
+			agilent.DeviceDescriptor.ManufacturerIndex))
+		fmt.Println(agilent.GetStringDescriptorAscii(
+			agilent.DeviceDescriptor.ProductIndex))
 	}
 
 }

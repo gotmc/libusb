@@ -104,8 +104,14 @@ func (ctx *context) OpenDeviceWithVendorProduct(vendorId, productId uint16) (*de
 			productId,
 		)
 	}
+	device := device{
+		libusbDevice: C.libusb_get_device(handle),
+	}
+	descriptor, _ := device.GetDeviceDescriptor()
 	deviceHandle := deviceHandle{
 		libusbDeviceHandle: handle,
+		device:             device,
+		DeviceDescriptor:   *descriptor,
 	}
 	return &deviceHandle, nil
 }
