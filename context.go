@@ -96,7 +96,6 @@ func (ctx *context) GetDeviceList() ([]*device, error) {
 }
 
 func (ctx *context) OpenDeviceWithVendorProduct(vendorId, productId uint16) (*deviceHandle, error) {
-	// var handle **C.libusb_device_handle
 	handle := C.libusb_open_device_with_vid_pid(ctx.context, C.uint16_t(vendorId), C.uint16_t(productId))
 	if handle == nil {
 		return nil, fmt.Errorf("Could not open USB device %v:%v",

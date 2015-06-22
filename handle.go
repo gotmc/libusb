@@ -46,6 +46,7 @@ func (dev *deviceHandle) GetStringDescriptorAscii(descIndex uint8) (string, erro
 	usberr := C.libusb_get_string_descriptor_ascii(
 		dev.libusbDeviceHandle,
 		C.uint8_t(descIndex),
+		// Unsafe pointer -> http://stackoverflow.com/a/16376039/95592
 		(*C.uchar)(unsafe.Pointer(&data[0])),
 		C.int(length),
 	)
