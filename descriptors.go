@@ -13,15 +13,15 @@ import "fmt"
 type classCode byte
 type bcd uint16
 
-func (bcd bcd) String() string {
-	return fmt.Sprintf("%#x (%2.2f)",
-		bcd,
-		bcd.AsDecimal(),
+func (b bcd) String() string {
+	return fmt.Sprintf("%#04x (%2.2f)",
+		uint16(b),
+		b.AsDecimal(),
 	)
 }
 
-func (bcd bcd) AsDecimal() float64 {
-	return bcdToDecimal(uint16(bcd))
+func (b bcd) AsDecimal() float64 {
+	return bcdToDecimal(uint16(b))
 }
 
 const (
@@ -152,8 +152,8 @@ type deviceDescriptor struct {
 	DescriptorType      descriptorType
 	USBSpecification    bcd
 	DeviceClass         classCode
-	DeviceSubClass      uint8
-	DeviceProtocol      uint8
+	DeviceSubClass      byte
+	DeviceProtocol      byte
 	MaxPacketSize0      uint8
 	VendorID            uint16
 	ProductID           uint16
@@ -175,8 +175,8 @@ func (dev *device) GetDeviceDescriptor() (*deviceDescriptor, error) {
 		DescriptorType:      descriptorType(desc.bDescriptorType),
 		USBSpecification:    bcd(desc.bcdUSB),
 		DeviceClass:         classCode(desc.bDeviceClass),
-		DeviceSubClass:      uint8(desc.bDeviceSubClass),
-		DeviceProtocol:      uint8(desc.bDeviceProtocol),
+		DeviceSubClass:      byte(desc.bDeviceSubClass),
+		DeviceProtocol:      byte(desc.bDeviceProtocol),
 		MaxPacketSize0:      uint8(desc.bMaxPacketSize0),
 		VendorID:            uint16(desc.idVendor),
 		ProductID:           uint16(desc.idProduct),
