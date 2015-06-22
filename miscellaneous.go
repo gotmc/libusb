@@ -8,7 +8,10 @@ package libusb
 // #cgo pkg-config: libusb-1.0
 // #include <libusb.h>
 import "C"
-import "fmt"
+import (
+	"fmt"
+	"math"
+)
 
 // ErrorCode is the type for the libusb_error C enum.
 type ErrorCode int
@@ -52,3 +55,15 @@ const (
 	errorNotSupported ErrorCode = C.LIBUSB_ERROR_NOT_SUPPORTED
 	errorOther        ErrorCode = C.LIBUSB_ERROR_OTHER
 )
+
+func bcdToDecimal(bcdValue uint16) float64 {
+	bcdPowersByPosition := []string{"hundreths", "tenths", "ones", "tens"}
+
+	var bcdMap map[string]uint16
+	bcdMap = make(map[string]uint16)
+	for i, power := range bcdPowersByPosition {
+		bcdMap[power] = bcdValue & (0xf << uint(4*i)) / uint16(math.Pow(16, float64(i)))
+	}
+	return 10*float64(bcdMap["tens"]) + float64(bcdMap["ones"]) +
+		0.1*float64(bcdMap["tenths"]) + 0.01*float64(bcdMap["hundreths"])
+}

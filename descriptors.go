@@ -8,8 +8,21 @@ package libusb
 // #cgo pkg-config: libusb-1.0
 // #include <libusb.h>
 import "C"
+import "fmt"
 
 type classCode byte
+type bcd uint16
+
+func (bcd bcd) String() string {
+	return fmt.Sprintf("%#x (%2.2f)",
+		bcd,
+		bcd.AsDecimal(),
+	)
+}
+
+func (bcd bcd) AsDecimal() float64 {
+	return bcdToDecimal(uint16(bcd))
+}
 
 const (
 	perInterface       classCode = C.LIBUSB_CLASS_PER_INTERFACE
@@ -135,20 +148,20 @@ func (transferType transferType) String() string {
 }
 
 type deviceDescriptor struct {
-	Length            uint8
-	DescriptorType    descriptorType
-	BcdUSB            uint16
-	DeviceClass       classCode
-	DeviceSubClass    uint8
-	DeviceProtocol    uint8
-	MaxPacketSize0    uint8
-	VendorID          uint16
-	ProductID         uint16
-	BcdDevice         uint16
-	ManufacturerIndex uint8
-	ProductIndex      uint8
-	SerialNumberIndex uint8
-	NumConfiguraitons uint8
+	Length              uint8
+	DescriptorType      descriptorType
+	USBSpecification    bcd
+	DeviceClass         classCode
+	DeviceSubClass      uint8
+	DeviceProtocol      uint8
+	MaxPacketSize0      uint8
+	VendorID            uint16
+	ProductID           uint16
+	DeviceReleaseNumber bcd
+	ManufacturerIndex   uint8
+	ProductIndex        uint8
+	SerialNumberIndex   uint8
+	NumConfigurations   uint8
 }
 
 func (dev *device) GetDeviceDescriptor() (*deviceDescriptor, error) {
@@ -158,20 +171,20 @@ func (dev *device) GetDeviceDescriptor() (*deviceDescriptor, error) {
 		return nil, ErrorCode(err)
 	}
 	descriptor := deviceDescriptor{
-		Length:            uint8(desc.bLength),
-		DescriptorType:    descriptorType(desc.bDescriptorType),
-		BcdUSB:            uint16(desc.bcdUSB),
-		DeviceClass:       classCode(desc.bDeviceClass),
-		DeviceSubClass:    uint8(desc.bDeviceSubClass),
-		DeviceProtocol:    uint8(desc.bDeviceProtocol),
-		MaxPacketSize0:    uint8(desc.bMaxPacketSize0),
-		VendorID:          uint16(desc.idVendor),
-		ProductID:         uint16(desc.idProduct),
-		BcdDevice:         uint16(desc.bcdDevice),
-		ManufacturerIndex: uint8(desc.iManufacturer),
-		ProductIndex:      uint8(desc.iProduct),
-		SerialNumberIndex: uint8(desc.iSerialNumber),
-		NumConfiguraitons: uint8(desc.bNumConfigurations),
+		Length:              uint8(desc.bLength),
+		DescriptorType:      descriptorType(desc.bDescriptorType),
+		USBSpecification:    bcd(desc.bcdUSB),
+		DeviceClass:         classCode(desc.bDeviceClass),
+		DeviceSubClass:      uint8(desc.bDeviceSubClass),
+		DeviceProtocol:      uint8(desc.bDeviceProtocol),
+		MaxPacketSize0:      uint8(desc.bMaxPacketSize0),
+		VendorID:            uint16(desc.idVendor),
+		ProductID:           uint16(desc.idProduct),
+		DeviceReleaseNumber: bcd(desc.bcdDevice),
+		ManufacturerIndex:   uint8(desc.iManufacturer),
+		ProductIndex:        uint8(desc.iProduct),
+		SerialNumberIndex:   uint8(desc.iSerialNumber),
+		NumConfigurations:   uint8(desc.bNumConfigurations),
 	}
 	return &descriptor, nil
 }

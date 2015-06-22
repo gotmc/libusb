@@ -5,7 +5,10 @@
 
 package libusb
 
-import "fmt"
+import (
+	"fmt"
+	"testing"
+)
 
 func ExampleErrorCode_Error() {
 	SetLocale("en")
@@ -39,4 +42,28 @@ func ExampleErrorCode_Error() {
 	// LIBUSB_ERROR_NO_MEM: Insufficient memory
 	// LIBUSB_ERROR_NOT_SUPPORTED: Operation not supported or unimplemented on this platform
 	// LIBUSB_ERROR_OTHER: Other error
+}
+
+func TestBcdToDecimal(t *testing.T) {
+	testCases := []struct {
+		bcdValue  uint16
+		bcdString float64
+	}{
+		{0x0300, 3.0},
+		{0x0200, 2.0},
+		{0x0110, 1.1},
+		{0x0100, 1.0},
+	}
+	t.Log("Given the need to test converting BCD values")
+	{
+		for _, testCase := range testCases {
+			t.Logf("\tWhen converting BCD value 0x%X", testCase.bcdValue)
+			computedString := bcdToDecimal(testCase.bcdValue)
+			if computedString != testCase.bcdString {
+				t.Errorf("\t%v Should have computed %2.2f but got %2.2f", failCheck, testCase.bcdString, computedString)
+			} else {
+				t.Logf("\t%v Should compute %2.2f", passCheck, computedString)
+			}
+		}
+	}
 }

@@ -56,12 +56,12 @@ func Init() (*context, error) {
 // Exit deinitializes the libusb session/context.
 func (ctx *context) Exit() error {
 	C.libusb_exit(ctx.context)
-	ctx = nil
+	ctx.context = nil
 	return nil
 }
 
 // SetDebug sets the log message verbosity.
-func (ctx *context) SetDebug(level logLevel) error {
+func (ctx *context) SetDebug(level logLevel) {
 	C.libusb_set_debug(ctx.context, C.int(level))
-	return nil
+	return
 }
