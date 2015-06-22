@@ -36,3 +36,9 @@ func (ctx *context) Exit() error {
 	ctx = nil
 	return nil
 }
+
+// SetDebug sets the log message verbosity.
+func (ctx *context) SetDebug(level int) error {
+	C.libusb_set_debug(ctx.context, C.int(level))
+	return nil
+}
