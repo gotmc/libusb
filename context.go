@@ -11,7 +11,11 @@ package libusb
 // #cgo pkg-config: libusb-1.0
 // #include <libusb.h>
 import "C"
-import "fmt"
+import (
+	"fmt"
+	"reflect"
+	"unsafe"
+)
 
 type logLevel int
 
@@ -64,4 +68,44 @@ func (ctx *context) Exit() error {
 func (ctx *context) SetDebug(level logLevel) {
 	C.libusb_set_debug(ctx.context, C.int(level))
 	return
+}
+
+// GetDeviceList returns an array of devices for the context.
+func (ctx *context) GetDeviceList() ([]*device, error) {
+	var devices []*device
+	var list **C.libusb_device
+	const unrefDevices = 1
+	numDevicesFound := int(C.libusb_get_device_list(ctx.context, &list))
+	if numDevicesFound < 0 {
+		return nil, ErrorCode(numDevicesFound)
+	}
+	defer C.libusb_free_device_list(list, unrefDevices)
+	var libusbDevices []*C.libusb_device
+	*(*reflect.SliceHeader)(unsafe.Pointer(&libusbDevices)) = reflect.SliceHeader{
+		Data: uintptr(unsafe.Pointer(list)),
+		Len:  numDevicesFound,
+		Cap:  numDevicesFound,
+	}
+	for _, thisLibusbDevice := range libusbDevices {
+		thisDevice := device{
+			libusbDevice: thisLibusbDevice,
+		}
+		devices = append(devices, &thisDevice)
+	}
+	return devices, nil
+}
+
+func (ctx *context) OpenDeviceWithVendorProduct(vendorId, productId uint16) (*deviceHandle, error) {
+	// var handle **C.libusb_device_handle
+	handle := C.libusb_open_device_with_vid_pid(ctx.context, C.uint16_t(vendorId), C.uint16_t(productId))
+	if handle == nil {
+		return nil, fmt.Errorf("Could not open USB device %v:%v",
+			vendorId,
+			productId,
+		)
+	}
+	deviceHandle := deviceHandle{
+		libusbDeviceHandle: handle,
+	}
+	return &deviceHandle, nil
 }

@@ -8,11 +8,6 @@ package libusb
 // #cgo pkg-config: libusb-1.0
 // #include <libusb.h>
 import "C"
-import (
-	"fmt"
-	"reflect"
-	"unsafe"
-)
 
 // TODO(mdr): Do I need to be hadnling the reference counts in cgo?
 
@@ -62,34 +57,6 @@ type device struct {
 	libusbDevice *C.libusb_device
 }
 
-type deviceHandle struct {
-	libusbDeviceHandle *C.libusb_device_handle
-}
-
-func (ctx *context) GetDeviceList() ([]*device, error) {
-	var devices []*device
-	var list **C.libusb_device
-	const unrefDevices = 1
-	numDevicesFound := int(C.libusb_get_device_list(ctx.context, &list))
-	if numDevicesFound < 0 {
-		return nil, ErrorCode(numDevicesFound)
-	}
-	defer C.libusb_free_device_list(list, unrefDevices)
-	var libusbDevices []*C.libusb_device
-	*(*reflect.SliceHeader)(unsafe.Pointer(&libusbDevices)) = reflect.SliceHeader{
-		Data: uintptr(unsafe.Pointer(list)),
-		Len:  numDevicesFound,
-		Cap:  numDevicesFound,
-	}
-	for _, thisLibusbDevice := range libusbDevices {
-		thisDevice := device{
-			libusbDevice: thisLibusbDevice,
-		}
-		devices = append(devices, &thisDevice)
-	}
-	return devices, nil
-}
-
 func (dev *device) GetBusNumber() (uint, error) {
 	busNumber, err := C.libusb_get_bus_number(dev.libusbDevice)
 	if err != nil {
@@ -124,25 +91,5 @@ func (dev *device) Open() (*deviceHandle, error) {
 		libusbDeviceHandle: *handle,
 	}
 
-	return &deviceHandle, nil
-}
-
-func (devHandle *deviceHandle) Close() error {
-	C.libusb_close(devHandle.libusbDeviceHandle)
-	return nil
-}
-
-func (ctx *context) OpenDeviceWithVendorProduct(vendorId, productId uint16) (*deviceHandle, error) {
-	// var handle **C.libusb_device_handle
-	handle := C.libusb_open_device_with_vid_pid(ctx.context, C.uint16_t(vendorId), C.uint16_t(productId))
-	if handle == nil {
-		return nil, fmt.Errorf("Could not open USB device %v:%v",
-			vendorId,
-			productId,
-		)
-	}
-	deviceHandle := deviceHandle{
-		libusbDeviceHandle: handle,
-	}
 	return &deviceHandle, nil
 }
