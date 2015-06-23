@@ -11,11 +11,11 @@ import "C"
 
 // TODO(mdr): Do I need to be handling the reference counts in cgo?
 
-type device struct {
+type Device struct {
 	libusbDevice *C.libusb_device
 }
 
-func (dev *device) GetBusNumber() (uint, error) {
+func (dev *Device) GetBusNumber() (uint, error) {
 	busNumber, err := C.libusb_get_bus_number(dev.libusbDevice)
 	if err != nil {
 		return 0, err
@@ -23,7 +23,7 @@ func (dev *device) GetBusNumber() (uint, error) {
 	return uint(busNumber), nil
 }
 
-func (dev *device) GetDeviceAddress() (uint, error) {
+func (dev *Device) GetDeviceAddress() (uint, error) {
 	deviceAddress, err := C.libusb_get_device_address(dev.libusbDevice)
 	if err != nil {
 		return 0, err
@@ -31,7 +31,7 @@ func (dev *device) GetDeviceAddress() (uint, error) {
 	return uint(deviceAddress), nil
 }
 
-func (dev *device) GetDeviceSpeed() (speed, error) {
+func (dev *Device) GetDeviceSpeed() (speed, error) {
 	deviceSpeed, err := C.libusb_get_device_speed(dev.libusbDevice)
 	if err != nil {
 		return 0, err
@@ -39,7 +39,7 @@ func (dev *device) GetDeviceSpeed() (speed, error) {
 	return speed(deviceSpeed), nil
 }
 
-func (dev *device) Open() (*deviceHandle, error) {
+func (dev *Device) Open() (*deviceHandle, error) {
 	var handle **C.libusb_device_handle
 	err := C.libusb_open(dev.libusbDevice, handle)
 	if err != 0 {
@@ -52,7 +52,7 @@ func (dev *device) Open() (*deviceHandle, error) {
 	return &deviceHandle, nil
 }
 
-func (dev *device) GetDeviceDescriptor() (*deviceDescriptor, error) {
+func (dev *Device) GetDeviceDescriptor() (*deviceDescriptor, error) {
 	var desc C.struct_libusb_device_descriptor
 	err := C.libusb_get_device_descriptor(dev.libusbDevice, &desc)
 	if err != 0 {

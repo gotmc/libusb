@@ -12,7 +12,7 @@ import "unsafe"
 
 type deviceHandle struct {
 	libusbDeviceHandle *C.libusb_device_handle
-	device             device
+	device             Device
 	DeviceDescriptor   deviceDescriptor
 }
 
@@ -40,7 +40,7 @@ func (dev *deviceHandle) GetStringDescriptor(
 	return "Yes!!!", nil
 }
 
-func (dev *deviceHandle) GetStringDescriptorAscii(descIndex uint8) (string, error) {
+func (dev *deviceHandle) GetStringDescriptorASCII(descIndex uint8) (string, error) {
 	length := 256
 	data := make([]byte, length)
 	usberr := C.libusb_get_string_descriptor_ascii(

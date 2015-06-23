@@ -34,7 +34,7 @@ func TestExitContext(t *testing.T) {
 			t.Error("\t", failCheck, "Should not have received an error:", err)
 		}
 		t.Log("\t", passCheck, "Should not receive an error.")
-		if context.context != nil {
+		if context.libusbContext != nil {
 			t.Fatal("\t", failCheck, "The context field in the context struct should be nil.")
 		}
 		t.Log("\t", passCheck, "The context field in the context struct should be nil.")

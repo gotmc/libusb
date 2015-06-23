@@ -41,15 +41,15 @@ func (level logLevel) String() string {
 }
 
 // Context represents a libusb session/context.
-type context struct {
-	context *C.libusb_context
+type Context struct {
+	libusbContext *C.libusb_context
 }
 
 // Init intializes a new libusb session/context by creating a new Context and
 // returning a pointer to that Context.
-func Init() (*context, error) {
-	newContext := &context{}
-	errnum := C.libusb_init(&newContext.context)
+func Init() (*Context, error) {
+	newContext := &Context{}
+	errnum := C.libusb_init(&newContext.libusbContext)
 	if errnum != 0 {
 		return nil, fmt.Errorf(
 			"Failed to initialize new libusb context. Received error %d", errnum)
@@ -58,24 +58,24 @@ func Init() (*context, error) {
 }
 
 // Exit deinitializes the libusb session/context.
-func (ctx *context) Exit() error {
-	C.libusb_exit(ctx.context)
-	ctx.context = nil
+func (ctx *Context) Exit() error {
+	C.libusb_exit(ctx.libusbContext)
+	ctx.libusbContext = nil
 	return nil
 }
 
 // SetDebug sets the log message verbosity.
-func (ctx *context) SetDebug(level logLevel) {
-	C.libusb_set_debug(ctx.context, C.int(level))
+func (ctx *Context) SetDebug(level logLevel) {
+	C.libusb_set_debug(ctx.libusbContext, C.int(level))
 	return
 }
 
 // GetDeviceList returns an array of devices for the context.
-func (ctx *context) GetDeviceList() ([]*device, error) {
-	var devices []*device
+func (ctx *Context) GetDeviceList() ([]*Device, error) {
+	var devices []*Device
 	var list **C.libusb_device
 	const unrefDevices = 1
-	numDevicesFound := int(C.libusb_get_device_list(ctx.context, &list))
+	numDevicesFound := int(C.libusb_get_device_list(ctx.libusbContext, &list))
 	if numDevicesFound < 0 {
 		return nil, ErrorCode(numDevicesFound)
 	}
@@ -87,7 +87,7 @@ func (ctx *context) GetDeviceList() ([]*device, error) {
 		Cap:  numDevicesFound,
 	}
 	for _, thisLibusbDevice := range libusbDevices {
-		thisDevice := device{
+		thisDevice := Device{
 			libusbDevice: thisLibusbDevice,
 		}
 		devices = append(devices, &thisDevice)
@@ -95,15 +95,21 @@ func (ctx *context) GetDeviceList() ([]*device, error) {
 	return devices, nil
 }
 
-func (ctx *context) OpenDeviceWithVendorProduct(vendorId, productId uint16) (*deviceHandle, error) {
-	handle := C.libusb_open_device_with_vid_pid(ctx.context, C.uint16_t(vendorId), C.uint16_t(productId))
+// OpenDeviceWithVendorProduct opens a USB device using the VendorID and
+// productID and then returns a device handle.
+func (ctx *Context) OpenDeviceWithVendorProduct(
+	vendorID,
+	productID uint16,
+) (*deviceHandle, error) {
+	handle := C.libusb_open_device_with_vid_pid(
+		ctx.libusbContext, C.uint16_t(vendorID), C.uint16_t(productID))
 	if handle == nil {
 		return nil, fmt.Errorf("Could not open USB device %v:%v",
-			vendorId,
-			productId,
+			vendorID,
+			productID,
 		)
 	}
-	device := device{
+	device := Device{
 		libusbDevice: C.libusb_get_device(handle),
 	}
 	descriptor, _ := device.GetDeviceDescriptor()

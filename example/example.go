@@ -56,13 +56,13 @@ func main() {
 		fmt.Println("Couldn't find the Agilent 33220A")
 	} else {
 		defer agilent.Close()
-		serialnum, _ := agilent.GetStringDescriptorAscii(
+		serialnum, _ := agilent.GetStringDescriptorASCII(
 			agilent.DeviceDescriptor.SerialNumberIndex,
 		)
 		fmt.Printf("Found Agilent 3322A S/N %s\n", serialnum)
-		fmt.Println(agilent.GetStringDescriptorAscii(
+		fmt.Println(agilent.GetStringDescriptorASCII(
 			agilent.DeviceDescriptor.ManufacturerIndex))
-		fmt.Println(agilent.GetStringDescriptorAscii(
+		fmt.Println(agilent.GetStringDescriptorASCII(
 			agilent.DeviceDescriptor.ProductIndex))
 	}
 
