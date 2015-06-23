@@ -3,9 +3,6 @@
 // Use of this source code is governed by a MIT-style license that
 // can be found in the LICENSE.txt file for the project.
 
-/*
-Package libusb provides a Go bindings for the  libusb C library.
-*/
 package libusb
 
 // #cgo pkg-config: libusb-1.0
@@ -100,23 +97,24 @@ func (ctx *Context) GetDeviceList() ([]*Device, error) {
 func (ctx *Context) OpenDeviceWithVendorProduct(
 	vendorID,
 	productID uint16,
-) (*deviceHandle, error) {
-	handle := C.libusb_open_device_with_vid_pid(
+) (*Device, error) {
+	var deviceHandle DeviceHandle
+	deviceHandle.libusbDeviceHandle = C.libusb_open_device_with_vid_pid(
 		ctx.libusbContext, C.uint16_t(vendorID), C.uint16_t(productID))
-	if handle == nil {
+	if deviceHandle.libusbDeviceHandle == nil {
 		return nil, fmt.Errorf("Could not open USB device %v:%v",
 			vendorID,
 			productID,
 		)
 	}
 	device := Device{
-		libusbDevice: C.libusb_get_device(handle),
+		libusbDevice:     C.libusb_get_device(deviceHandle.libusbDeviceHandle),
+		DeviceDescriptor: nil,
+		DeviceHandle:     &deviceHandle,
 	}
-	descriptor, _ := device.GetDeviceDescriptor()
-	deviceHandle := deviceHandle{
-		libusbDeviceHandle: handle,
-		device:             device,
-		DeviceDescriptor:   *descriptor,
+	err := device.GetDeviceDescriptor()
+	if err != nil {
+		return nil, err
 	}
-	return &deviceHandle, nil
+	return &device, nil
 }

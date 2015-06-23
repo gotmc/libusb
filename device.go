@@ -11,10 +11,14 @@ import "C"
 
 // TODO(mdr): Do I need to be handling the reference counts in cgo?
 
+// Device represents a USB device, but not a device handle.
 type Device struct {
 	libusbDevice *C.libusb_device
+	*DeviceDescriptor
+	*DeviceHandle
 }
 
+// GetBusNumber returns the bus number for the USB device.
 func (dev *Device) GetBusNumber() (uint, error) {
 	busNumber, err := C.libusb_get_bus_number(dev.libusbDevice)
 	if err != nil {
@@ -23,6 +27,7 @@ func (dev *Device) GetBusNumber() (uint, error) {
 	return uint(busNumber), nil
 }
 
+// GetDeviceAddress returns the address for the USB device.
 func (dev *Device) GetDeviceAddress() (uint, error) {
 	deviceAddress, err := C.libusb_get_device_address(dev.libusbDevice)
 	if err != nil {
@@ -31,6 +36,7 @@ func (dev *Device) GetDeviceAddress() (uint, error) {
 	return uint(deviceAddress), nil
 }
 
+// GetDeviceSpeed returns the speed for the USB device.
 func (dev *Device) GetDeviceSpeed() (speed, error) {
 	deviceSpeed, err := C.libusb_get_device_speed(dev.libusbDevice)
 	if err != nil {
@@ -39,26 +45,30 @@ func (dev *Device) GetDeviceSpeed() (speed, error) {
 	return speed(deviceSpeed), nil
 }
 
-func (dev *Device) Open() (*deviceHandle, error) {
+// Open returns a USB device handle for the given USB device. A handle is
+// necessary for any I/O operations.
+func (dev *Device) Open() error {
 	var handle **C.libusb_device_handle
 	err := C.libusb_open(dev.libusbDevice, handle)
 	if err != 0 {
-		return nil, ErrorCode(err)
+		return ErrorCode(err)
 	}
-	deviceHandle := deviceHandle{
+	dev.DeviceHandle = &DeviceHandle{
 		libusbDeviceHandle: *handle,
 	}
 
-	return &deviceHandle, nil
+	return nil
 }
 
-func (dev *Device) GetDeviceDescriptor() (*deviceDescriptor, error) {
+// GetDeviceDescriptor returns the USB device descriptor for the given USB
+// device.
+func (dev *Device) GetDeviceDescriptor() error {
 	var desc C.struct_libusb_device_descriptor
 	err := C.libusb_get_device_descriptor(dev.libusbDevice, &desc)
 	if err != 0 {
-		return nil, ErrorCode(err)
+		return ErrorCode(err)
 	}
-	descriptor := deviceDescriptor{
+	dev.DeviceDescriptor = &DeviceDescriptor{
 		Length:              uint8(desc.bLength),
 		DescriptorType:      descriptorType(desc.bDescriptorType),
 		USBSpecification:    bcd(desc.bcdUSB),
@@ -74,5 +84,5 @@ func (dev *Device) GetDeviceDescriptor() (*deviceDescriptor, error) {
 		SerialNumberIndex:   uint8(desc.iSerialNumber),
 		NumConfigurations:   uint8(desc.bNumConfigurations),
 	}
-	return &descriptor, nil
+	return nil
 }

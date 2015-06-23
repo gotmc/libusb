@@ -20,6 +20,9 @@ func (b bcd) String() string {
 	)
 }
 
+// AsDecimal converts the BCD value with a format 0xJJMN into a decimal JJ.MN
+// where JJ is the major version number, M is the minor version, and N is the
+// sub-minor version number.
 func (b bcd) AsDecimal() float64 {
 	return bcdToDecimal(uint16(b))
 }
@@ -147,7 +150,8 @@ func (transferType transferType) String() string {
 	return transferTypes[transferType]
 }
 
-type deviceDescriptor struct {
+// DeviceDescriptor represents a USB device descriptor as a Go struct.
+type DeviceDescriptor struct {
 	Length              uint8
 	DescriptorType      descriptorType
 	USBSpecification    bcd

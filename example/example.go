@@ -33,21 +33,21 @@ func main() {
 		deviceAddress, _ := usbDevice.GetDeviceAddress()
 		deviceSpeed, _ := usbDevice.GetDeviceSpeed()
 		busNumber, _ := usbDevice.GetBusNumber()
-		deviceDescriptor, _ := usbDevice.GetDeviceDescriptor()
+		_ = usbDevice.GetDeviceDescriptor()
 		fmt.Printf("Device address %v is on bus number %v. %v\n",
 			deviceAddress,
 			busNumber,
 			deviceSpeed,
 		)
 		fmt.Printf("\tVendor: %v \tProduct: %v \tClass: %v\n",
-			deviceDescriptor.VendorID,
-			deviceDescriptor.ProductID,
-			deviceDescriptor.DeviceClass,
+			usbDevice.VendorID,
+			usbDevice.ProductID,
+			usbDevice.DeviceClass,
 		)
 		fmt.Printf("\tUSB: %v\tRelease Num: %v\tSN Index: %v\n",
-			deviceDescriptor.USBSpecification,
-			deviceDescriptor.DeviceReleaseNumber,
-			deviceDescriptor.SerialNumberIndex,
+			usbDevice.USBSpecification,
+			usbDevice.DeviceReleaseNumber,
+			usbDevice.SerialNumberIndex,
 		)
 	}
 	fmt.Println("Let's open the Agilent 33220A")
@@ -57,13 +57,17 @@ func main() {
 	} else {
 		defer agilent.Close()
 		serialnum, _ := agilent.GetStringDescriptorASCII(
-			agilent.DeviceDescriptor.SerialNumberIndex,
+			agilent.SerialNumberIndex,
 		)
-		fmt.Printf("Found Agilent 3322A S/N %s\n", serialnum)
-		fmt.Println(agilent.GetStringDescriptorASCII(
-			agilent.DeviceDescriptor.ManufacturerIndex))
-		fmt.Println(agilent.GetStringDescriptorASCII(
-			agilent.DeviceDescriptor.ProductIndex))
+		manufacturer, _ := agilent.GetStringDescriptorASCII(
+			agilent.ManufacturerIndex)
+		product, _ := agilent.GetStringDescriptorASCII(
+			agilent.ProductIndex)
+		fmt.Printf("Found %v %v S/N %s\n",
+			manufacturer,
+			product,
+			serialnum,
+		)
 	}
 
 }

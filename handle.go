@@ -10,18 +10,18 @@ package libusb
 import "C"
 import "unsafe"
 
-type deviceHandle struct {
+// DeviceHandle represents the libusb device handle.
+type DeviceHandle struct {
 	libusbDeviceHandle *C.libusb_device_handle
-	device             Device
-	DeviceDescriptor   deviceDescriptor
 }
 
-func (dev *deviceHandle) Close() error {
+// Close closes the device handle.
+func (dev *DeviceHandle) Close() error {
 	C.libusb_close(dev.libusbDeviceHandle)
 	return nil
 }
 
-func (dev *deviceHandle) GetStringDescriptor(
+func (dev *DeviceHandle) GetStringDescriptor(
 	descIndex uint8,
 	langID uint16,
 ) (string, error) {
@@ -40,7 +40,7 @@ func (dev *deviceHandle) GetStringDescriptor(
 	return "Yes!!!", nil
 }
 
-func (dev *deviceHandle) GetStringDescriptorASCII(descIndex uint8) (string, error) {
+func (dev *DeviceHandle) GetStringDescriptorASCII(descIndex uint8) (string, error) {
 	length := 256
 	data := make([]byte, length)
 	usberr := C.libusb_get_string_descriptor_ascii(
