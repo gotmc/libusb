@@ -11,7 +11,7 @@ import "C"
 
 // TODO(mdr): Do I need to be handling the reference counts in cgo?
 
-// Device represents a USB device, but not a device handle.
+// Device represents a USB device including the opaque libusb_device struct.
 type Device struct {
 	libusbDevice *C.libusb_device
 	*DeviceDescriptor
@@ -45,8 +45,8 @@ func (dev *Device) GetDeviceSpeed() (speed, error) {
 	return speed(deviceSpeed), nil
 }
 
-// Open returns a USB device handle for the given USB device. A handle is
-// necessary for any I/O operations.
+// Open opens a USB device and obtains a device handle, which is necessary for
+// any I/O operations.
 func (dev *Device) Open() error {
 	var handle **C.libusb_device_handle
 	err := C.libusb_open(dev.libusbDevice, handle)
