@@ -32,17 +32,124 @@ func TestBcdType(t *testing.T) {
 			} else {
 				t.Logf("\t%v Should compute %s", passCheck, computedString)
 			}
-			// t.Logf("\tWhen getting the decimal value for bcd %#x", testCase.bcdValue)
-			// computedDecimal := testCase.bcdValue.AsDecimal()
-			// if computedDecimal != testCase.bcdDecimal {
-			// t.Errorf("\t%v Should return decimal %2.2f but got %2.2f",
-			// failCheck,
-			// testCase.bcdDecimal,
-			// computedDecimal,
-			// )
-			// } else {
-			// t.Logf("\t%v Should return decimal %2.2f", passCheck, computedDecimal)
-			// }
+		}
+	}
+}
+
+func TestClassCodeStringMethod(t *testing.T) {
+	testCases := []struct {
+		class    classCode
+		expected string
+	}{
+		{perInterface, "Each interface specifies its own class information and all interfaces operate independently."},
+		{audio, "Audio class."},
+		{comm, "Communications class."},
+		{hid, "Human Interface Device class."},
+		{physical, "Physical."},
+		{printer, "Printer class."},
+		{image, "Image class."},
+		{massStorage, "Mass storage class."},
+		{hub, "Hub class."},
+		{data, "Data class."},
+		{smartCard, "Smart Card."},
+		{contentSecurity, "Content Security."},
+		{video, "Video."},
+		{personalHealthcare, "Personal Healthcare."},
+		{diagnosticDevice, "Diagnostic Device."},
+		{wireless, "Wireless class."},
+		{application, "Application class."},
+		{vendorSpec, "Class is vendor-specific."},
+	}
+	t.Log("Given the need to test the classCode.String() method")
+	{
+		for _, testCase := range testCases {
+			t.Logf("\tWhen getting classCode %d's string", testCase.class)
+			computed := testCase.class.String()
+			if computed != testCase.expected {
+				t.Errorf("\t%v Should have yielded: %s, but got %s", failCheck, testCase.expected, computed)
+			} else {
+				t.Logf("\t%v Should yield: %s", passCheck, computed)
+			}
+		}
+	}
+}
+
+func TestDescriptortypeStringMethod(t *testing.T) {
+	testCases := []struct {
+		desc     descriptorType
+		expected string
+	}{
+		{descDevice, "Device descriptor."},
+		{descConfig, "Configuration descriptor."},
+		{descString, "String descriptor."},
+		{descInterface, "Interface descriptor."},
+		{descEndpoint, "Endpoint descriptor."},
+		{descBos, "BOS descriptor."},
+		{descDeviceCapability, "Device Capability descriptor."},
+		{descHid, "HID descriptor."},
+		{descReport, "HID report descriptor."},
+		{descPhysical, "Physical descriptor."},
+		{descHub, "Hub descriptor."},
+		{descSuperspeedHub, "SuperSpeed Hub descriptor."},
+		{descEndpointCompanion, "SuperSpeed Endpoint Companion descriptor."},
+	}
+	t.Log("Given the need to test the descriptorType.String() method")
+	{
+		for _, testCase := range testCases {
+			t.Logf("\tWhen getting descriptorType %d's string", testCase.desc)
+			computed := testCase.desc.String()
+			if computed != testCase.expected {
+				t.Errorf("\t%v Should have yielded: %s, but got %s", failCheck, testCase.expected, computed)
+			} else {
+				t.Logf("\t%v Should yield: %s", passCheck, computed)
+			}
+		}
+	}
+}
+
+func TestEndpointDirectionStringMethod(t *testing.T) {
+	testCases := []struct {
+		end      endpointDirection
+		expected string
+	}{
+		{endpointIn, "In: device-to-host."},
+		{endpointOut, "Out: host-to-device."},
+	}
+	t.Log("Given the need to test the endpointDirection.String() method")
+	{
+		for _, testCase := range testCases {
+			t.Logf("\tWhen getting endpointDirection %d's string", testCase.end)
+			computed := testCase.end.String()
+			if computed != testCase.expected {
+				t.Errorf("\t%v Should have yielded: %s, but got %s", failCheck, testCase.expected, computed)
+			} else {
+				t.Logf("\t%v Should yield: %s", passCheck, computed)
+			}
+		}
+	}
+}
+
+func TestTransferTypeStringMethod(t *testing.T) {
+	testCases := []struct {
+		transfer transferType
+		expected string
+	}{
+		{controlTransfer, "Control endpoint."},
+		{isochronousTransfer, "Isochronous endpoint."},
+		{bulkTransfer, "Bulk endpoint."},
+		{interruptTransfer, "Interrupt endpoint."},
+		{bulkStreamTransfer, "Stream endpoint."},
+	}
+	t.Log("Given the need to test the endpointDirection.String() method")
+	{
+		for _, testCase := range testCases {
+			t.Logf("\tWhen getting endpointDirection %d's string", testCase.transfer)
+			computed := testCase.transfer.String()
+			if computed != testCase.expected {
+				t.Errorf("\t%v Should have yielded: %s, but got %s", failCheck, testCase.expected, computed)
+			} else {
+				t.Logf("\t%v Should yield: %s", passCheck, computed)
+			}
 		}
 	}
 }

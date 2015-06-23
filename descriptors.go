@@ -13,6 +13,7 @@ import "fmt"
 type classCode byte
 type bcd uint16
 
+// String implements the Stringer interface for bcd.
 func (b bcd) String() string {
 	return fmt.Sprintf("%#04x (%2.2f)",
 		uint16(b),
@@ -70,6 +71,7 @@ var classCodes = map[classCode]string{
 	vendorSpec:         "Class is vendor-specific.",
 }
 
+// String implements the Stringer interface for classCode.
 func (classCode classCode) String() string {
 	return classCodes[classCode]
 }
@@ -124,6 +126,7 @@ var endpointDirections = map[endpointDirection]string{
 	endpointOut: "Out: host-to-device.",
 }
 
+// String implements the Stringer interface for endpointDirection.
 func (endpointDirection endpointDirection) String() string {
 	return endpointDirections[endpointDirection]
 }
@@ -149,6 +152,8 @@ var transferTypes = map[transferType]string{
 func (transferType transferType) String() string {
 	return transferTypes[transferType]
 }
+
+// TODO(mdr): May want to replace uint8 with a type specific for indexes.
 
 // DeviceDescriptor represents a USB device descriptor as a Go struct.
 type DeviceDescriptor struct {
