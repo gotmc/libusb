@@ -26,7 +26,6 @@ func main() {
 		log.Fatal("Couldn't create USB context. Ending now.")
 	}
 	defer ctx.Exit()
-	fmt.Println("Made it past libusb.Init()")
 	devices, _ := ctx.GetDeviceList()
 	fmt.Printf("Found %v USB devices.\n", len(devices))
 	for _, usbDevice := range devices {
@@ -34,40 +33,62 @@ func main() {
 		deviceSpeed, _ := usbDevice.GetDeviceSpeed()
 		busNumber, _ := usbDevice.GetBusNumber()
 		_ = usbDevice.GetDeviceDescriptor()
-		fmt.Printf("Device address %v is on bus number %v. %v\n",
+		fmt.Printf("Device address %v is on bus number %v\n=> %v\n",
 			deviceAddress,
 			busNumber,
 			deviceSpeed,
 		)
-		fmt.Printf("\tVendor: %v \tProduct: %v \tClass: %v\n",
+		fmt.Printf("=> Vendor: %v \tProduct: %v\n=> Class: %v\n",
 			usbDevice.VendorID,
 			usbDevice.ProductID,
 			usbDevice.DeviceClass,
 		)
-		fmt.Printf("\tUSB: %v\tRelease Num: %v\tSN Index: %v\n",
+		fmt.Printf("=> USB: %v\tMax Packet 0: %v\tSN Index: %v\n",
 			usbDevice.USBSpecification,
-			usbDevice.DeviceReleaseNumber,
+			usbDevice.MaxPacketSize0,
 			usbDevice.SerialNumberIndex,
 		)
 	}
-	fmt.Println("Let's open the Agilent 33220A")
-	agilent, err := ctx.OpenDeviceWithVendorProduct(2391, 1031)
-	if err != nil {
-		fmt.Println("Couldn't find the Agilent 33220A")
-	} else {
-		defer agilent.Close()
-		serialnum, _ := agilent.GetStringDescriptorASCII(
-			agilent.SerialNumberIndex,
-		)
-		manufacturer, _ := agilent.GetStringDescriptorASCII(
-			agilent.ManufacturerIndex)
-		product, _ := agilent.GetStringDescriptorASCII(
-			agilent.ProductIndex)
-		fmt.Printf("Found %v %v S/N %s\n",
-			manufacturer,
-			product,
-			serialnum,
-		)
-	}
+	showInfo(ctx, "Agilent 33220A", 2391, 1031)
+	showInfo(ctx, "Nike SportWatch", 4524, 21588)
+	showInfo(ctx, "Nike FuelBand", 4524, 25957)
 
+}
+
+func showInfo(ctx *libusb.Context, name string, vendorID, productID uint16) {
+	fmt.Printf("Let's open the %s using the Vendor and Product IDs\n", name)
+	usbDevice, err := ctx.OpenDeviceWithVendorProduct(vendorID, productID)
+	if err != nil {
+		fmt.Printf("=> Failed opening the %s: %v\n", name, err)
+		return
+	}
+	defer usbDevice.Close()
+	serialnum, _ := usbDevice.GetStringDescriptorASCII(
+		usbDevice.SerialNumberIndex,
+	)
+	manufacturer, _ := usbDevice.GetStringDescriptorASCII(
+		usbDevice.ManufacturerIndex)
+	product, _ := usbDevice.GetStringDescriptorASCII(
+		usbDevice.ProductIndex)
+	fmt.Printf("Found %v %v S/N %s using Vendor ID %v and Product ID %v\n",
+		manufacturer,
+		product,
+		serialnum,
+		vendorID,
+		productID,
+	)
+	err = usbDevice.GetActiveConfigDescriptor()
+	if err != nil {
+		log.Fatalf("Failed getting the active config: %v", err)
+	}
+	fmt.Printf("=> Max Power = %d mA\n",
+		usbDevice.ActiveConfiguration.MaxPowerMilliAmperes)
+	var singularPlural string
+	if usbDevice.ActiveConfiguration.NumInterfaces == 1 {
+		singularPlural = "interface"
+	} else {
+		singularPlural = "interfaces"
+	}
+	fmt.Printf("=> %d %s\n",
+		usbDevice.ActiveConfiguration.NumInterfaces, singularPlural)
 }
