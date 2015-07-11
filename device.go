@@ -8,6 +8,7 @@ package libusb
 // #cgo pkg-config: libusb-1.0
 // #include <libusb.h>
 import "C"
+import "fmt"
 
 // TODO(mdr): Do I need to be handling the reference counts in cgo?
 
@@ -25,6 +26,15 @@ func (dev *Device) GetBusNumber() (uint, error) {
 		return 0, err
 	}
 	return uint(busNumber), nil
+}
+
+// GetPortNumber returns the port number for the given USB device.
+func (dev *Device) GetPortNumber() (uint, error) {
+	portNumber, err := C.libusb_get_port_number(dev.libusbDevice)
+	if err != nil {
+		return 0, fmt.Errorf("Port number is unavailable for device %v", dev)
+	}
+	return uint(portNumber), nil
 }
 
 // GetDeviceAddress returns the address for the USB device.
@@ -83,6 +93,45 @@ func (dev *Device) GetDeviceDescriptor() error {
 		ProductIndex:        uint8(desc.iProduct),
 		SerialNumberIndex:   uint8(desc.iSerialNumber),
 		NumConfigurations:   uint8(desc.bNumConfigurations),
+		ActiveConfiguration: nil,
+	}
+	return nil
+}
+
+// ResetDevice performs a USB port reset to reinitialize a device.
+//
+// Per libusb: "The system will attempt to restore the previous configuration
+// and alternate settings after the reset has completed. If the reset fails,
+// the descriptors change, or the previous state cannot be restored, the device
+// will appear to be disconnected and reconnected. This means that the device
+// handle is no longer valid (you should close it) and rediscover the device. A
+// return code of LIBUSB_ERROR_NOT_FOUND indicates when this is the case.  This
+// is a blocking function which usually incurs a noticeable delay.
+func (dev *Device) ResetDevice() error {
+	err := C.libusb_reset_device(dev.libusbDeviceHandle)
+	if err != 0 {
+		return ErrorCode(err)
+	}
+	return nil
+}
+
+func (dev *Device) GetActiveConfigDescriptor() error {
+	var config *C.struct_libusb_config_descriptor
+	err := C.libusb_get_active_config_descriptor(dev.libusbDevice, &config)
+	defer C.libusb_free_config_descriptor(config)
+	if err != 0 {
+		return ErrorCode(err)
+	}
+	dev.ActiveConfiguration = &ConfigurationDescriptor{
+		Length:               uint8(config.bLength),
+		DescriptorType:       descriptorType(config.bDescriptorType),
+		TotalLength:          uint16(config.wTotalLength),
+		NumInterfaces:        uint8(config.bNumInterfaces),
+		ConfigurationValue:   uint8(config.bConfigurationValue),
+		ConfigurationIndex:   uint8(config.iConfiguration),
+		Attributes:           uint8(config.bmAttributes),
+		MaxPowerMilliAmperes: 2 * uint(config.MaxPower), // Convert from 2 mA to just mA
+		Interfaces:           nil,
 	}
 	return nil
 }
