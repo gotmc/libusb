@@ -49,10 +49,11 @@ func TestBcdToDecimal(t *testing.T) {
 		bcdValue  uint16
 		bcdString float64
 	}{
-		{0x0300, 3.0},
-		{0x0200, 2.0},
 		{0x0110, 1.1},
-		{0x0100, 1.0},
+		{0x0200, 2.0},
+		{0x0210, 2.1},
+		{0x0300, 3.0},
+		{0x0310, 3.1},
 	}
 	t.Log("Given the need to test converting BCD values")
 	{
