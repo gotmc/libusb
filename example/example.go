@@ -12,7 +12,7 @@ import (
 	"github.com/gotmc/libusb"
 )
 
-func main() {
+func showVersion() {
 	version := libusb.GetVersion()
 	fmt.Printf(
 		"Using libusb version %d.%d.%d (%d)\n",
@@ -21,6 +21,10 @@ func main() {
 		version.Micro,
 		version.Nano,
 	)
+}
+
+func main() {
+	showVersion()
 	ctx, err := libusb.Init()
 	if err != nil {
 		log.Fatal("Couldn't create USB context. Ending now.")
@@ -51,7 +55,7 @@ func main() {
 	}
 	showInfo(ctx, "Agilent 33220A", 2391, 1031)
 	// showInfo(ctx, "Nike SportWatch", 4524, 21588)
-	// showInfo(ctx, "Nike FuelBand", 4524, 25957)
+	showInfo(ctx, "Nike FuelBand", 4524, 25957)
 
 }
 
@@ -91,4 +95,5 @@ func showInfo(ctx *libusb.Context, name string, vendorID, productID uint16) {
 	}
 	fmt.Printf("=> %d %s\n",
 		usbDevice.ActiveConfiguration.NumInterfaces, singularPlural)
+	fmt.Printf("=> The first interface has %d endpoints", usbDevice.ActiveConfiguration.Interfaces[0].NumEndpoints)
 }
