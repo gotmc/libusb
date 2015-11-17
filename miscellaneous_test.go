@@ -8,6 +8,8 @@ package libusb
 import (
 	"fmt"
 	"testing"
+
+	c "github.com/smartystreets/goconvey/convey"
 )
 
 func ExampleErrorCode_Error() {
@@ -46,8 +48,8 @@ func ExampleErrorCode_Error() {
 
 func TestBcdToDecimal(t *testing.T) {
 	testCases := []struct {
-		bcdValue  uint16
-		bcdString float64
+		bcdValue     uint16
+		decimalValue float64
 	}{
 		{0x0110, 1.1},
 		{0x0200, 2.0},
@@ -55,16 +57,16 @@ func TestBcdToDecimal(t *testing.T) {
 		{0x0300, 3.0},
 		{0x0310, 3.1},
 	}
-	t.Log("Given the need to test converting BCD values")
-	{
+	c.Convey("Given the need to convert BCD values into decimal", t, func() {
 		for _, testCase := range testCases {
-			t.Logf("\tWhen converting BCD value 0x%X", testCase.bcdValue)
-			computedString := bcdToDecimal(testCase.bcdValue)
-			if computedString != testCase.bcdString {
-				t.Errorf("\t%v Should have computed %2.2f but got %2.2f", failCheck, testCase.bcdString, computedString)
-			} else {
-				t.Logf("\t%v Should compute %2.2f", passCheck, computedString)
-			}
+			conveyance := fmt.Sprintf("When the BCD value is 0x%X", testCase.bcdValue)
+			c.Convey(conveyance, func() {
+				conveyance := fmt.Sprintf("Then the decimal value should be %2.2f", testCase.decimalValue)
+				c.Convey(conveyance, func() {
+					computedValue := bcdToDecimal(testCase.bcdValue)
+					c.So(computedValue, c.ShouldEqual, testCase.decimalValue)
+				})
+			})
 		}
-	}
+	})
 }
