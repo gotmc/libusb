@@ -10,8 +10,8 @@ import "testing"
 func TestGetVersion(t *testing.T) {
 	const major = 1
 	const minor = 0
-	const micro = 19
-	const nano = 10903
+	const micro = 20
+	const nano = 11004
 	releaseCandidate := ""
 	describe := "http://libusb.info"
 	version := GetVersion()
