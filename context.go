@@ -40,12 +40,15 @@ func (level logLevel) String() string {
 // Context represents a libusb session/context.
 type Context struct {
 	libusbContext *C.libusb_context
+	LogLevel      logLevel
 }
 
 // Init intializes a new libusb session/context by creating a new Context and
 // returning a pointer to that Context.
 func Init() (*Context, error) {
-	newContext := &Context{}
+	newContext := &Context{
+		LogLevel: LogLevelNone,
+	}
 	errnum := C.libusb_init(&newContext.libusbContext)
 	if errnum != 0 {
 		return nil, fmt.Errorf(
@@ -64,6 +67,7 @@ func (ctx *Context) Exit() error {
 // SetDebug sets the log message verbosity.
 func (ctx *Context) SetDebug(level logLevel) {
 	C.libusb_set_debug(ctx.libusbContext, C.int(level))
+	ctx.LogLevel = level
 	return
 }
 
