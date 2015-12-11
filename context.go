@@ -99,26 +99,20 @@ func (ctx *Context) GetDeviceList() ([]*Device, error) {
 // OpenDeviceWithVendorProduct opens a USB device using the VendorID and
 // productID and then returns a device handle.
 func (ctx *Context) OpenDeviceWithVendorProduct(
-	vendorID,
+	vendorID uint16,
 	productID uint16,
-) (*Device, error) {
+) (*Device, *DeviceHandle, error) {
 	var deviceHandle DeviceHandle
 	deviceHandle.libusbDeviceHandle = C.libusb_open_device_with_vid_pid(
 		ctx.libusbContext, C.uint16_t(vendorID), C.uint16_t(productID))
 	if deviceHandle.libusbDeviceHandle == nil {
-		return nil, fmt.Errorf("Could not open USB device %v:%v",
+		return nil, nil, fmt.Errorf("Could not open USB device %v:%v",
 			vendorID,
 			productID,
 		)
 	}
 	device := Device{
-		libusbDevice:     C.libusb_get_device(deviceHandle.libusbDeviceHandle),
-		DeviceDescriptor: nil,
-		DeviceHandle:     &deviceHandle,
+		libusbDevice: C.libusb_get_device(deviceHandle.libusbDeviceHandle),
 	}
-	err := device.GetDeviceDescriptor()
-	if err != nil {
-		return nil, err
-	}
-	return &device, nil
+	return &device, &deviceHandle, nil
 }

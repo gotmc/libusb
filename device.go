@@ -8,45 +8,67 @@ package libusb
 // #cgo pkg-config: libusb-1.0
 // #include <libusb.h>
 import "C"
-import "fmt"
+import (
+	"fmt"
+	"reflect"
+	"unsafe"
+)
 
 // TODO(mdr): Do I need to be handling the reference counts in cgo?
 
 // Device represents a USB device including the opaque libusb_device struct.
 type Device struct {
-	libusbDevice *C.libusb_device
-	*DeviceDescriptor
-	*DeviceHandle
+	libusbDevice        *C.libusb_device
+	ActiveConfiguration *ConfigDescriptor
+}
+
+// DeviceDescriptor represents a USB device descriptor as a Go struct.
+type DeviceDescriptor struct {
+	Length              uint8
+	DescriptorType      descriptorType
+	USBSpecification    bcd
+	DeviceClass         classCode
+	DeviceSubClass      byte
+	DeviceProtocol      byte
+	MaxPacketSize0      uint8
+	VendorID            uint16
+	ProductID           uint16
+	DeviceReleaseNumber bcd
+	ManufacturerIndex   uint8
+	ProductIndex        uint8
+	SerialNumberIndex   uint8
+	NumConfigurations   uint8
 }
 
 // GetBusNumber returns the bus number for the USB device.
-func (dev *Device) GetBusNumber() (uint, error) {
+func (dev *Device) GetBusNumber() (int, error) {
 	busNumber, err := C.libusb_get_bus_number(dev.libusbDevice)
 	if err != nil {
 		return 0, err
 	}
-	return uint(busNumber), nil
+	return int(busNumber), nil
 }
 
 // GetPortNumber returns the port number for the given USB device.
-func (dev *Device) GetPortNumber() (uint, error) {
+func (dev *Device) GetPortNumber() (int, error) {
 	portNumber, err := C.libusb_get_port_number(dev.libusbDevice)
 	if err != nil {
 		return 0, fmt.Errorf("Port number is unavailable for device %v", dev)
 	}
-	return uint(portNumber), nil
+	return int(portNumber), nil
 }
 
 // GetDeviceAddress returns the address for the USB device.
-func (dev *Device) GetDeviceAddress() (uint, error) {
+func (dev *Device) GetDeviceAddress() (int, error) {
 	deviceAddress, err := C.libusb_get_device_address(dev.libusbDevice)
 	if err != nil {
 		return 0, err
 	}
-	return uint(deviceAddress), nil
+	return int(deviceAddress), nil
 }
 
-// GetDeviceSpeed returns the speed for the USB device.
+// GetDeviceSpeed implements the libusb_get_device speed to return the speed
+// for the USB device.
 func (dev *Device) GetDeviceSpeed() (speed, error) {
 	deviceSpeed, err := C.libusb_get_device_speed(dev.libusbDevice)
 	if err != nil {
@@ -55,30 +77,29 @@ func (dev *Device) GetDeviceSpeed() (speed, error) {
 	return speed(deviceSpeed), nil
 }
 
-// Open opens a USB device and obtains a device handle, which is necessary for
-// any I/O operations.
-func (dev *Device) Open() error {
+// Open implements the libusb_open function to open a USB device and obtain a
+// device handle, which is necessary for any I/O operations.
+func (dev *Device) Open() (*DeviceHandle, error) {
 	var handle **C.libusb_device_handle
 	err := C.libusb_open(dev.libusbDevice, handle)
 	if err != 0 {
-		return ErrorCode(err)
+		return nil, ErrorCode(err)
 	}
-	dev.DeviceHandle = &DeviceHandle{
+	deviceHandle := &DeviceHandle{
 		libusbDeviceHandle: *handle,
 	}
-
-	return nil
+	return deviceHandle, nil
 }
 
-// GetDeviceDescriptor returns the USB device descriptor for the given USB
-// device.
-func (dev *Device) GetDeviceDescriptor() error {
+// GetDeviceDescriptor implements the libusb_get_device_descriptor function to
+// update the DeviceDescriptor struct embedded in the Device.
+func (dev *Device) GetDeviceDescriptor() (*DeviceDescriptor, error) {
 	var desc C.struct_libusb_device_descriptor
 	err := C.libusb_get_device_descriptor(dev.libusbDevice, &desc)
 	if err != 0 {
-		return ErrorCode(err)
+		return nil, ErrorCode(err)
 	}
-	dev.DeviceDescriptor = &DeviceDescriptor{
+	deviceDescriptor := DeviceDescriptor{
 		Length:              uint8(desc.bLength),
 		DescriptorType:      descriptorType(desc.bDescriptorType),
 		USBSpecification:    bcd(desc.bcdUSB),
@@ -93,45 +114,99 @@ func (dev *Device) GetDeviceDescriptor() error {
 		ProductIndex:        uint8(desc.iProduct),
 		SerialNumberIndex:   uint8(desc.iSerialNumber),
 		NumConfigurations:   uint8(desc.bNumConfigurations),
-		ActiveConfiguration: nil,
 	}
-	return nil
+	return &deviceDescriptor, nil
 }
 
-// ResetDevice performs a USB port reset to reinitialize a device.
-//
-// Per libusb: "The system will attempt to restore the previous configuration
-// and alternate settings after the reset has completed. If the reset fails,
-// the descriptors change, or the previous state cannot be restored, the device
-// will appear to be disconnected and reconnected. This means that the device
-// handle is no longer valid (you should close it) and rediscover the device. A
-// return code of LIBUSB_ERROR_NOT_FOUND indicates when this is the case.  This
-// is a blocking function which usually incurs a noticeable delay.
-func (dev *Device) ResetDevice() error {
-	err := C.libusb_reset_device(dev.libusbDeviceHandle)
-	if err != 0 {
-		return ErrorCode(err)
-	}
-	return nil
-}
-
-func (dev *Device) GetActiveConfigDescriptor() error {
+func (dev *Device) GetActiveConfigDescriptor() (*ConfigDescriptor, error) {
 	var config *C.struct_libusb_config_descriptor
 	err := C.libusb_get_active_config_descriptor(dev.libusbDevice, &config)
 	defer C.libusb_free_config_descriptor(config)
 	if err != 0 {
-		return ErrorCode(err)
+		return nil, ErrorCode(err)
 	}
-	dev.ActiveConfiguration = &ConfigurationDescriptor{
-		Length:               uint8(config.bLength),
+	activeConfiguration := &ConfigDescriptor{
+		Length:               int(config.bLength),
 		DescriptorType:       descriptorType(config.bDescriptorType),
 		TotalLength:          uint16(config.wTotalLength),
-		NumInterfaces:        uint8(config.bNumInterfaces),
+		NumInterfaces:        int(config.bNumInterfaces),
 		ConfigurationValue:   uint8(config.bConfigurationValue),
 		ConfigurationIndex:   uint8(config.iConfiguration),
 		Attributes:           uint8(config.bmAttributes),
 		MaxPowerMilliAmperes: 2 * uint(config.MaxPower), // Convert from 2 mA to just mA
-		Interfaces:           nil,
+		SupportedInterfaces:  nil,
 	}
-	return nil
+	// Per Turning C arrays into Go slices
+	// https://github.com/golang/go/wiki/cgo#turning-c-arrays-into-go-slices
+	var cInterface *C.struct_libusb_interface = config._interface
+	length := activeConfiguration.NumInterfaces
+	hdr := reflect.SliceHeader{
+		Data: uintptr(unsafe.Pointer(cInterface)),
+		Len:  length,
+		Cap:  length,
+	}
+	libusbInterfaces := *(*[]C.struct_libusb_interface)(unsafe.Pointer(&hdr))
+
+	var supportedInterfaces []*SupportedInterface
+	// Loop through the array of interfaces support by this configuration
+	// const struct libusb_interface * interface
+	for _, libusbInterface := range libusbInterfaces {
+		supportedInterface := SupportedInterface{
+			NumAltSettings:       int(libusbInterface.num_altsetting),
+			InterfaceDescriptors: nil,
+		}
+		var interfaceDescriptors []*InterfaceDescriptor
+		var cInterfaceDescriptor *C.struct_libusb_interface_descriptor = libusbInterface.altsetting
+		length := int(libusbInterface.num_altsetting)
+		hdr := reflect.SliceHeader{
+			Data: uintptr(unsafe.Pointer(cInterfaceDescriptor)),
+			Len:  length,
+			Cap:  length,
+		}
+		libusbInterfaceDescriptors := *(*[]C.struct_libusb_interface_descriptor)(unsafe.Pointer(&hdr))
+
+		// Loop through the array of interface descriptors
+		// const struct libusb_interface_descriptor * altsetting
+		for _, libusbInterfaceDescriptor := range libusbInterfaceDescriptors {
+			interfaceDescriptor := InterfaceDescriptor{
+				Length:              int(libusbInterfaceDescriptor.bLength),
+				DescriptorType:      descriptorType(libusbInterfaceDescriptor.bDescriptorType),
+				InterfaceNumber:     int(libusbInterfaceDescriptor.bInterfaceNumber),
+				AlternateSetting:    int(libusbInterfaceDescriptor.bAlternateSetting),
+				NumEndpoints:        int(libusbInterfaceDescriptor.bNumEndpoints),
+				InterfaceClass:      uint8(libusbInterfaceDescriptor.bInterfaceClass),
+				InterfaceSubClass:   uint8(libusbInterfaceDescriptor.bInterfaceSubClass),
+				InterfaceIndex:      int(libusbInterfaceDescriptor.iInterface),
+				EndpointDescriptors: nil,
+			}
+			// Loop through the array of endpoint descriptors
+			// const struct libusb_endpoint_descriptor * endpoint
+			interfaceDescriptors = append(interfaceDescriptors, &interfaceDescriptor)
+		}
+		supportedInterface.InterfaceDescriptors = interfaceDescriptors
+		supportedInterfaces = append(supportedInterfaces, &supportedInterface)
+	}
+	activeConfiguration.SupportedInterfaces = supportedInterfaces
+	return activeConfiguration, nil
+}
+
+func (dev *Device) GetConfigDescriptor(configIndex int) (*ConfigDescriptor, error) {
+	var cConfig *C.struct_libusb_config_descriptor
+	err := C.libusb_get_config_descriptor(dev.libusbDevice, C.uint8_t(configIndex), &cConfig)
+	defer C.libusb_free_config_descriptor(cConfig)
+	if err != 0 {
+		return nil, ErrorCode(err)
+	}
+	configuration := &ConfigDescriptor{
+		Length:               int(cConfig.bLength),
+		DescriptorType:       descriptorType(cConfig.bDescriptorType),
+		TotalLength:          uint16(cConfig.wTotalLength),
+		NumInterfaces:        int(cConfig.bNumInterfaces),
+		ConfigurationValue:   uint8(cConfig.bConfigurationValue),
+		ConfigurationIndex:   uint8(cConfig.iConfiguration),
+		Attributes:           uint8(cConfig.bmAttributes),
+		MaxPowerMilliAmperes: 2 * uint(cConfig.MaxPower), // Convert from 2 mA to just mA
+		SupportedInterfaces:  nil,
+	}
+	return configuration, nil
 }
