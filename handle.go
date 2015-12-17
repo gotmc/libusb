@@ -22,22 +22,25 @@ func (dh *DeviceHandle) GetStringDescriptor(
 	descIndex uint8,
 	langID uint16,
 ) (string, error) {
-	var data *C.uchar
+	var cData *C.uchar
 	length := 512
 	usberr := C.libusb_get_string_descriptor(
 		dh.libusbDeviceHandle,
 		C.uint8_t(descIndex),
 		C.uint16_t(langID),
-		data,
+		cData,
 		C.int(length),
 	)
 	if usberr < 0 {
 		return "", ErrorCode(usberr)
 	}
-	return "Yes!!!", nil
+	data := (*C.char)(unsafe.Pointer(cData))
+	return C.GoString(data), nil
 }
 
-func (dh *DeviceHandle) GetStringDescriptorASCII(descIndex uint8) (string, error) {
+func (dh *DeviceHandle) GetStringDescriptorASCII(
+	descIndex uint8,
+) (string, error) {
 	length := 256
 	data := make([]byte, length)
 	usberr := C.libusb_get_string_descriptor_ascii(
