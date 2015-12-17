@@ -6,11 +6,21 @@
 package main
 
 import (
+	"bytes"
+	"encoding/binary"
 	"fmt"
 	"log"
 
 	"github.com/gotmc/libusb"
 )
+
+const reservedField = 0x00
+
+const (
+	devDepMsgOut msgID = 1 // DEV_DEP_MSG_OUT
+)
+
+type msgID uint8
 
 func showVersion() {
 	version := libusb.GetVersion()
@@ -102,6 +112,107 @@ func showInfo(ctx *libusb.Context, name string, vendorID, productID uint16) {
 	fmt.Printf("=> The first interface descriptor has a length of %d.\n", firstDescriptor.Length)
 	fmt.Printf("=> The first interface descriptor is interface number %d.\n", firstDescriptor.InterfaceNumber)
 	fmt.Printf("=> The first interface descriptor has %d endpoint(s).\n", firstDescriptor.NumEndpoints)
-	fmt.Printf("   => USB-IF class %d, subclass %d, protocol %d.\n",
-		firstDescriptor.InterfaceClass, firstDescriptor.InterfaceSubClass, firstDescriptor.InterfaceProtocol)
+	fmt.Printf(
+		"   => USB-IF class %d, subclass %d, protocol %d.\n",
+		firstDescriptor.InterfaceClass, firstDescriptor.InterfaceSubClass, firstDescriptor.InterfaceProtocol,
+	)
+	for i, endpoint := range firstDescriptor.EndpointDescriptors {
+		fmt.Printf(
+			"   => Endpoint index %d on Interface %d has the following properties:\n",
+			i, firstDescriptor.InterfaceNumber)
+		fmt.Printf("     => Address: %d (b%08b)\n", endpoint.EndpointAddress, endpoint.EndpointAddress)
+		fmt.Printf("       => Endpoint #: %d\n", endpoint.Number())
+		fmt.Printf("       => Direction: %s (%d)\n", endpoint.Direction(), endpoint.Direction())
+		fmt.Printf("     => Attributes: %d (b%08b) \n", endpoint.Attributes, endpoint.Attributes)
+		fmt.Printf("       => Transfer Type: %s (%d) \n", endpoint.TransferType(), endpoint.TransferType())
+		fmt.Printf("     => Max packet size: %d\n", endpoint.MaxPacketSize)
+	}
+
+	err = usbDeviceHandle.ClaimInterface(0)
+	if err != nil {
+		log.Printf("Error claiming interface %s", err)
+	}
+	// Send USBTMC message to Agilent 33220A
+	bulkOutput := firstDescriptor.EndpointDescriptors[0]
+	address := bulkOutput.EndpointAddress
+	message := []byte("apply:sinusoid 2340, 0.1, 0.0\n")
+	header := createDevDepMsgOutBulkOutHeader(uint32(len(message)), true, 1)
+	log.Printf("DevDepMsgOutBulkOutHeader = %v", header)
+	data := append(header[:], message...)
+	if moduloFour := len(data) % 4; moduloFour > 0 {
+		numAlignment := 4 - moduloFour
+		alignment := bytes.Repeat([]byte{0x00}, numAlignment)
+		data = append(data, alignment...)
+	}
+	fmt.Printf("Trying to send on endpoint address %d\n", address)
+	transferred, err := usbDeviceHandle.BulkTransfer(
+		address,
+		data,
+		len(data),
+		5000,
+	)
+	if err != nil {
+		log.Printf("Error on bulk transfer %s", err)
+	}
+	fmt.Printf("Sent %d bytes to 33220A\n", transferred)
+	err = usbDeviceHandle.ReleaseInterface(0)
+	if err != nil {
+		log.Printf("Error releasing interface %s", err)
+	}
+}
+
+func createDevDepMsgOutBulkOutHeader(
+	transferSize uint32, eom bool, bTag byte,
+) [12]byte {
+	// Offset 0-3: See Table 1.
+	prefix := encodeBulkHeaderPrefix(devDepMsgOut, bTag)
+	// Offset 4-7: TransferSize
+	// Per USBTMC Table 3, the TransferSize is the "total number of USBTMC
+	// message data bytes to be sent in this USB transfer. This does not include
+	// the number of bytes in this Bulk-OUT Header or alignment bytes. Sent least
+	// significant byte first, most significant byte last. TransferSize must be >
+	// 0x00000000."
+	packedTransferSize := make([]byte, 4)
+	binary.LittleEndian.PutUint32(packedTransferSize, transferSize)
+	// Offset 8: bmTransferAttributes
+	// Per USBTMC Table 3, D0 of bmTransferAttributes:
+	//   1 - The last USBTMC message data byte in the transfer is the last byte
+	//       of the USBTMC message.
+	//   0 - The last USBTMC message data byte in the transfer is not the last
+	//       byte of the USBTMC message.
+	// All other bits of bmTransferAttributes must be 0.
+	bmTransferAttributes := byte(0x00)
+	if eom {
+		bmTransferAttributes = byte(0x01)
+	}
+	// Offset 9-11: reservedField. Must be 0x000000.
+	return [12]byte{
+		prefix[0],
+		prefix[1],
+		prefix[2],
+		prefix[3],
+		packedTransferSize[0],
+		packedTransferSize[1],
+		packedTransferSize[2],
+		packedTransferSize[3],
+		bmTransferAttributes,
+		reservedField,
+		reservedField,
+		reservedField,
+	}
+}
+
+// Create the first four bytes of the USBTMC meassage Bulk-OUT Header as shown
+// in USBTMC Table 1. The msgID value must match USBTMC Table 2.
+func encodeBulkHeaderPrefix(msgID msgID, bTag byte) [4]byte {
+	return [4]byte{
+		byte(msgID),
+		bTag,
+		invertbTag(bTag),
+		reservedField,
+	}
+}
+
+func invertbTag(bTag byte) byte {
+	return bTag ^ 0xff
 }

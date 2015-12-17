@@ -147,7 +147,7 @@ func (dev *Device) GetActiveConfigDescriptor() (*ConfigDescriptor, error) {
 	}
 	libusbInterfaces := *(*[]C.struct_libusb_interface)(unsafe.Pointer(&hdr))
 
-	var supportedInterfaces []*SupportedInterface
+	var supportedInterfaces SupportedInterfaces
 	// Loop through the array of interfaces support by this configuration
 	// const struct libusb_interface * interface
 	for _, libusbInterface := range libusbInterfaces {
@@ -155,7 +155,7 @@ func (dev *Device) GetActiveConfigDescriptor() (*ConfigDescriptor, error) {
 			NumAltSettings:       int(libusbInterface.num_altsetting),
 			InterfaceDescriptors: nil,
 		}
-		var interfaceDescriptors []*InterfaceDescriptor
+		var interfaceDescriptors InterfaceDescriptors
 		var cInterfaceDescriptor *C.struct_libusb_interface_descriptor = libusbInterface.altsetting
 		length := int(libusbInterface.num_altsetting)
 		hdr := reflect.SliceHeader{
@@ -179,8 +179,29 @@ func (dev *Device) GetActiveConfigDescriptor() (*ConfigDescriptor, error) {
 				InterfaceIndex:      int(libusbInterfaceDescriptor.iInterface),
 				EndpointDescriptors: nil,
 			}
+			var endpointDescriptors EndpointDescriptors
+			var cEndpointDescriptor *C.struct_libusb_endpoint_descriptor = libusbInterfaceDescriptor.endpoint
+			length := int(libusbInterfaceDescriptor.bNumEndpoints)
+			hdr := reflect.SliceHeader{
+				Data: uintptr(unsafe.Pointer(cEndpointDescriptor)),
+				Len:  length,
+				Cap:  length,
+			}
+			libusbEndpointDescriptors := *(*[]C.struct_libusb_endpoint_descriptor)(unsafe.Pointer(&hdr))
+
 			// Loop through the array of endpoint descriptors
 			// const struct libusb_endpoint_descriptor * endpoint
+			for _, libusbEndpointDescriptor := range libusbEndpointDescriptors {
+				endpointDescriptor := EndpointDescriptor{
+					Length:          int(libusbEndpointDescriptor.bLength),
+					DescriptorType:  descriptorType(libusbEndpointDescriptor.bDescriptorType),
+					EndpointAddress: endpointAddress(libusbEndpointDescriptor.bEndpointAddress),
+					Attributes:      endpointAttributes(libusbEndpointDescriptor.bmAttributes),
+					MaxPacketSize:   uint16(libusbEndpointDescriptor.wMaxPacketSize),
+				}
+				endpointDescriptors = append(endpointDescriptors, &endpointDescriptor)
+			}
+			interfaceDescriptor.EndpointDescriptors = endpointDescriptors
 			interfaceDescriptors = append(interfaceDescriptors, &interfaceDescriptor)
 		}
 		supportedInterface.InterfaceDescriptors = interfaceDescriptors

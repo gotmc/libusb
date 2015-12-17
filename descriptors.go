@@ -117,8 +117,13 @@ func (descriptorType descriptorType) String() string {
 type endpointDirection byte
 
 const (
-	endpointIn  endpointDirection = C.LIBUSB_ENDPOINT_IN
-	endpointOut endpointDirection = C.LIBUSB_ENDPOINT_OUT
+	// Per USB 2.0 spec bit 7 of the endpoint address defines the direction,
+	// where 0 = OUT and 1 = IN. The libusb C.LIBUSB_ENDPOINT_IN enumeration is
+	// 128 instead of 1. Therefore, I'm not using C.LIBUSB_ENDPOINT_IN (128).
+	endpointOut   endpointDirection = 0
+	endpointIn    endpointDirection = 1
+	directionMask endpointAddress   = 0x80
+	directionBit                    = 7
 )
 
 var endpointDirections = map[endpointDirection]string{
@@ -157,3 +162,12 @@ func (transferType transferType) String() string {
 
 type GenericDescriptor struct {
 }
+
+type synchronizationType byte
+
+const (
+	NoSync   synchronizationType = C.LIBUSB_ISO_SYNC_TYPE_NONE
+	Async    synchronizationType = C.LIBUSB_ISO_SYNC_TYPE_ASYNC
+	Adaptive synchronizationType = C.LIBUSB_ISO_SYNC_TYPE_ADAPTIVE
+	Sync     synchronizationType = C.LIBUSB_ISO_SYNC_TYPE_SYNC
+)
