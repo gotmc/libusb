@@ -145,12 +145,7 @@ func showInfo(ctx *libusb.Context, name string, vendorID, productID uint16) {
 		data = append(data, alignment...)
 	}
 	fmt.Printf("Trying to send on endpoint address %d\n", address)
-	transferred, err := usbDeviceHandle.BulkTransfer(
-		address,
-		data,
-		len(data),
-		5000,
-	)
+	transferred, err := usbDeviceHandle.BulkTransferOut(address, data, 5000)
 	if err != nil {
 		log.Printf("Error on bulk transfer %s", err)
 	}

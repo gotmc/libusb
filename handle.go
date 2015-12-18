@@ -8,10 +8,7 @@ package libusb
 // #cgo pkg-config: libusb-1.0
 // #include <libusb.h>
 import "C"
-import (
-	"reflect"
-	"unsafe"
-)
+import "unsafe"
 
 // DeviceHandle represents the libusb device handle.
 type DeviceHandle struct {
@@ -190,29 +187,16 @@ func (dh *DeviceHandle) SetAutoDetachKernelDriver(enable bool) error {
 	return nil
 }
 
-func (dh *DeviceHandle) BulkTransfer(
+func (dh *DeviceHandle) BulkTransferOut(
 	endpoint endpointAddress,
 	data []byte,
-	length int,
 	timeout int,
 ) (int, error) {
-	// var transferred *C.int
-	// err := C.libusb_bulk_transfer(
-	// dh.libusbDeviceHandle,
-	// C.uchar(endpoint),
-	// (*C.uchar)(unsafe.Pointer(&data[0])),
-	// C.int(length),
-	// transferred,
-	// C.uint(timeout),
-	// )
-
-	cData := (*reflect.SliceHeader)(unsafe.Pointer(&data)).Data
-
 	var transferred C.int
 	err := C.libusb_bulk_transfer(
 		dh.libusbDeviceHandle,
 		C.uchar(endpoint),
-		(*C.uchar)(unsafe.Pointer(cData)),
+		(*C.uchar)(unsafe.Pointer(&data[0])),
 		C.int(len(data)),
 		&transferred,
 		C.uint(timeout),
