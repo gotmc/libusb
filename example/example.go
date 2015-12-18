@@ -135,16 +135,8 @@ func showInfo(ctx *libusb.Context, name string, vendorID, productID uint16) {
 	// Send USBTMC message to Agilent 33220A
 	bulkOutput := firstDescriptor.EndpointDescriptors[0]
 	address := bulkOutput.EndpointAddress
-	message := []byte("apply:sinusoid 2340, 0.1, 0.0\n")
-	header := createDevDepMsgOutBulkOutHeader(uint32(len(message)), true, 1)
-	log.Printf("DevDepMsgOutBulkOutHeader = %v", header)
-	data := append(header[:], message...)
-	if moduloFour := len(data) % 4; moduloFour > 0 {
-		numAlignment := 4 - moduloFour
-		alignment := bytes.Repeat([]byte{0x00}, numAlignment)
-		data = append(data, alignment...)
-	}
-	fmt.Printf("Trying to send on endpoint address %d\n", address)
+	fmt.Printf("Set frequency/amplitude on endpoint address %d\n", address)
+	data := createGotmcMessage("apply:sinusoid 2340, 0.1, 0.0")
 	transferred, err := usbDeviceHandle.BulkTransferOut(address, data, 5000)
 	if err != nil {
 		log.Printf("Error on bulk transfer %s", err)
@@ -210,4 +202,16 @@ func encodeBulkHeaderPrefix(msgID msgID, bTag byte) [4]byte {
 
 func invertbTag(bTag byte) byte {
 	return bTag ^ 0xff
+}
+
+func createGotmcMessage(input string) []byte {
+	message := []byte(input + "\n")
+	header := createDevDepMsgOutBulkOutHeader(uint32(len(message)), true, 1)
+	data := append(header[:], message...)
+	if moduloFour := len(data) % 4; moduloFour > 0 {
+		numAlignment := 4 - moduloFour
+		alignment := bytes.Repeat([]byte{0x00}, numAlignment)
+		data = append(data, alignment...)
+	}
+	return data
 }
