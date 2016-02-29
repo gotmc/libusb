@@ -213,19 +213,12 @@ func (dh *DeviceHandle) BulkTransferOut(
 	data []byte,
 	timeout int,
 ) (int, error) {
-	var transferred C.int
-	err := C.libusb_bulk_transfer(
-		dh.libusbDeviceHandle,
-		C.uchar(endpoint),
-		(*C.uchar)(unsafe.Pointer(&data[0])),
-		C.int(len(data)),
-		&transferred,
-		C.uint(timeout),
+	return dh.BulkTransfer(
+		endpoint,
+		data,
+		len(data),
+		timeout,
 	)
-	if err != 0 {
-		return 0, ErrorCode(err)
-	}
-	return int(transferred), nil
 }
 
 func (dh *DeviceHandle) BulkTransferIn(
@@ -234,17 +227,14 @@ func (dh *DeviceHandle) BulkTransferIn(
 	timeout int,
 ) ([]byte, int, error) {
 	data := make([]byte, maxReceiveBytes)
-	var transferred C.int
-	err := C.libusb_bulk_transfer(
-		dh.libusbDeviceHandle,
-		C.uchar(endpoint),
-		(*C.uchar)(unsafe.Pointer(&data[0])),
-		C.int(len(data)),
-		&transferred,
-		C.uint(timeout),
+	transferred, err := dh.BulkTransfer(
+		endpoint,
+		data,
+		maxReceiveBytes,
+		timeout,
 	)
-	if err != 0 {
-		return nil, 0, ErrorCode(err)
+	if err != nil {
+		return nil, 0, err
 	}
 	return data, int(transferred), nil
 }
