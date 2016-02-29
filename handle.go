@@ -187,6 +187,27 @@ func (dh *DeviceHandle) SetAutoDetachKernelDriver(enable bool) error {
 	return nil
 }
 
+func (dh *DeviceHandle) BulkTransfer(
+	endpoint endpointAddress,
+	data []byte,
+	length int,
+	timeout int,
+) (int, error) {
+	var transferred C.int
+	err := C.libusb_bulk_transfer(
+		dh.libusbDeviceHandle,
+		C.uchar(endpoint),
+		(*C.uchar)(unsafe.Pointer(&data[0])),
+		C.int(length),
+		&transferred,
+		C.uint(timeout),
+	)
+	if err != 0 {
+		return 0, ErrorCode(err)
+	}
+	return int(transferred), nil
+}
+
 func (dh *DeviceHandle) BulkTransferOut(
 	endpoint endpointAddress,
 	data []byte,
