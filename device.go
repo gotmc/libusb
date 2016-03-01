@@ -58,6 +58,15 @@ func (dev *Device) GetPortNumber() (int, error) {
 	return int(portNumber), nil
 }
 
+// GetMaxPacketSize returns the wMaxPacketSize for a partricular endpoint.
+func (dev *Device) GetMaxPacketSize(ep endpointAddress) (int, error) {
+	maxPacketSize, err := C.libusb_get_max_packet_size(dev.libusbDevice)
+	if err != nil {
+		return 0, fmt.Errorf("wMaxPacketSize is unavailable for device %v", dev)
+	}
+	return int(maxPacketSize), nil
+}
+
 // GetDeviceAddress returns the address for the USB device.
 func (dev *Device) GetDeviceAddress() (int, error) {
 	deviceAddress, err := C.libusb_get_device_address(dev.libusbDevice)
