@@ -8,7 +8,10 @@ package libusb
 // #cgo pkg-config: libusb-1.0
 // #include <libusb.h>
 import "C"
-import "go.googlesource.com/go/src/unsafe"
+import (
+	"log"
+	"unsafe"
+)
 
 func (dh *DeviceHandle) BulkTransfer(
 	endpoint endpointAddress,
@@ -21,13 +24,15 @@ func (dh *DeviceHandle) BulkTransfer(
 		dh.libusbDeviceHandle,
 		C.uchar(endpoint),
 		(*C.uchar)(unsafe.Pointer(&data[0])),
-		C.int(length),
+		C.int(len(data)),
 		&transferred,
 		C.uint(timeout),
 	)
 	if err != 0 {
+		log.Printf("Hit an error on bulk transfer %d\n", err)
 		return 0, ErrorCode(err)
 	}
+	log.Printf("Transferred %d bytes\n", int(transferred))
 	return int(transferred), nil
 }
 
@@ -62,20 +67,21 @@ func (dh *DeviceHandle) BulkTransferIn(
 	return data, int(transferred), nil
 }
 
+// ControlTransfer sends a transfer using a control endpoint for the given
+// device handle.
+// FIXME: Should I be using uint16, uint, or just int?
 func (dh *DeviceHandle) ControlTransfer(
-	endpoint endpointAddress,
-	requestType uint8,
-	request uint8,
+	requestType bmRequestType,
+	request byte,
 	value uint16,
 	index uint16,
 	data []byte,
 	length int,
 	timeout int,
 ) (int, error) {
-	var transferred C.int
 	ret := C.libusb_control_transfer(
 		dh.libusbDeviceHandle,
-		C.uint8_t(reqquestType),
+		C.uint8_t(requestType),
 		C.uint8_t(request),
 		C.uint16_t(value),
 		C.uint16_t(index),

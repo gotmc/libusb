@@ -60,7 +60,7 @@ func (dev *Device) GetPortNumber() (int, error) {
 
 // GetMaxPacketSize returns the wMaxPacketSize for a partricular endpoint.
 func (dev *Device) GetMaxPacketSize(ep endpointAddress) (int, error) {
-	maxPacketSize, err := C.libusb_get_max_packet_size(dev.libusbDevice)
+	maxPacketSize, err := C.libusb_get_max_packet_size(dev.libusbDevice, C.uchar(ep))
 	if err != nil {
 		return 0, fmt.Errorf("wMaxPacketSize is unavailable for device %v", dev)
 	}
@@ -89,13 +89,13 @@ func (dev *Device) GetDeviceSpeed() (speed, error) {
 // Open implements the libusb_open function to open a USB device and obtain a
 // device handle, which is necessary for any I/O operations.
 func (dev *Device) Open() (*DeviceHandle, error) {
-	var handle **C.libusb_device_handle
-	err := C.libusb_open(dev.libusbDevice, handle)
+	var handle *C.libusb_device_handle
+	err := C.libusb_open(dev.libusbDevice, &handle)
 	if err != 0 {
 		return nil, ErrorCode(err)
 	}
 	deviceHandle := &DeviceHandle{
-		libusbDeviceHandle: *handle,
+		libusbDeviceHandle: handle,
 	}
 	return deviceHandle, nil
 }

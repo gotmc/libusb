@@ -137,7 +137,7 @@ func showInfo(ctx *libusb.Context, name string, vendorID, productID uint16) {
 	address := bulkOutput.EndpointAddress
 	fmt.Printf("Set frequency/amplitude on endpoint address %d\n", address)
 	data := createGotmcMessage("apply:sinusoid 2340, 0.1, 0.0")
-	transferred, err := usbDeviceHandle.BulkTransferOut(address, data, 5000)
+	transferred, err := usbDeviceHandle.BulkTransfer(address, data, len(data), 5000)
 	if err != nil {
 		log.Printf("Error on bulk transfer %s", err)
 	}

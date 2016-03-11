@@ -120,15 +120,15 @@ const (
 	// Per USB 2.0 spec bit 7 of the endpoint address defines the direction,
 	// where 0 = OUT and 1 = IN. The libusb C.LIBUSB_ENDPOINT_IN enumeration is
 	// 128 instead of 1. Therefore, I'm not using C.LIBUSB_ENDPOINT_IN (128).
-	endpointOut   endpointDirection = 0
-	endpointIn    endpointDirection = 1
+	endpointOut   endpointDirection = C.LIBUSB_ENDPOINT_OUT
+	endpointIn    endpointDirection = C.LIBUSB_ENDPOINT_IN
 	directionMask endpointAddress   = 0x80
 	directionBit                    = 7
 )
 
 var endpointDirections = map[endpointDirection]string{
-	endpointIn:  "In: device-to-host.",
 	endpointOut: "Out: host-to-device.",
+	endpointIn:  "In: device-to-host.",
 }
 
 // String implements the Stringer interface for endpointDirection.

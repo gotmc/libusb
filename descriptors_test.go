@@ -112,8 +112,8 @@ func TestEndpointDirectionStringMethod(t *testing.T) {
 		end      endpointDirection
 		expected string
 	}{
-		{endpointIn, "In: device-to-host."},
 		{endpointOut, "Out: host-to-device."},
+		{endpointIn, "In: device-to-host."},
 	}
 	t.Log("Given the need to test the endpointDirection.String() method")
 	{
