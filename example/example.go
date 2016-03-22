@@ -63,7 +63,7 @@ func main() {
 			usbDeviceDescriptor.SerialNumberIndex,
 		)
 	}
-	showInfo(ctx, "Agilent 33220A", 2391, 1031)
+	// showInfo(ctx, "Agilent 33220A", 2391, 1031)
 	// showInfo(ctx, "Nike SportWatch", 4524, 21588)
 	// showInfo(ctx, "Nike FuelBand", 4524, 25957)
 
