@@ -24,7 +24,7 @@ func (dh *DeviceHandle) BulkTransfer(
 		dh.libusbDeviceHandle,
 		C.uchar(endpoint),
 		(*C.uchar)(unsafe.Pointer(&data[0])),
-		C.int(len(data)),
+		C.int(length),
 		&transferred,
 		C.uint(timeout),
 	)
@@ -32,7 +32,7 @@ func (dh *DeviceHandle) BulkTransfer(
 		log.Printf("Hit an error on bulk transfer %d\n", err)
 		return 0, ErrorCode(err)
 	}
-	log.Printf("Transferred %d bytes\n", int(transferred))
+	log.Printf("Bulk transfer received %d bytes", int(transferred))
 	return int(transferred), nil
 }
 
