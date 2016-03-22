@@ -38,9 +38,13 @@ func (dh *DeviceHandle) GetStringDescriptor(
 	return C.GoString(data), nil
 }
 
+// GetStringDescriptorASCII is a wrapper around the
+// C.libusb_string_descriptor_ascii function which retrieves an ASCII string
+// descriptor using the given index of the descriptor to retrieve.
 func (dh *DeviceHandle) GetStringDescriptorASCII(
 	descIndex uint8,
 ) (string, error) {
+	// TODO(mdr): Should the length be a constant? Why did I pick 256 bytes?
 	length := 256
 	data := make([]byte, length)
 	bytesRead, err := C.libusb_get_string_descriptor_ascii(
