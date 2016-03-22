@@ -8,7 +8,10 @@ package libusb
 // #cgo pkg-config: libusb-1.0
 // #include <libusb.h>
 import "C"
-import "unsafe"
+import (
+	"fmt"
+	"unsafe"
+)
 
 // DeviceHandle represents the libusb device handle.
 type DeviceHandle struct {
@@ -49,6 +52,9 @@ func (dh *DeviceHandle) GetStringDescriptorASCII(
 	)
 	if err != nil {
 		return "", err
+	}
+	if bytesRead < 0 {
+		return "", fmt.Errorf("%s", err)
 	}
 	return string(data[0:bytesRead]), nil
 }
