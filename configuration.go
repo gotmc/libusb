@@ -5,11 +5,13 @@
 
 package libusb
 
+// Config models the USB configuration.
 type Config struct {
 	*ConfigDescriptor
 	Device *Device
 }
 
+// ConfigDescriptor models the descriptor for the USB configuration
 type ConfigDescriptor struct {
 	Length               int
 	DescriptorType       descriptorType

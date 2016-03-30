@@ -32,7 +32,6 @@ func (dh *DeviceHandle) BulkTransfer(
 		log.Printf("Hit an error on bulk transfer %d\n", err)
 		return 0, ErrorCode(err)
 	}
-	log.Printf("Bulk transfer received %d bytes", int(transferred))
 	return int(transferred), nil
 }
 
