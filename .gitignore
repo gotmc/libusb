@@ -28,4 +28,4 @@ _testmain.go
 coverage.out
 
 # Ignore executables
-example/get_sn/get_sn_example
+example/get_sn/get_sn
