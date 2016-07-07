@@ -26,3 +26,6 @@ _testmain.go
 
 # Ignore the covrage analyses
 coverage.out
+
+# Ignore executables
+example/get_sn/get_sn_example

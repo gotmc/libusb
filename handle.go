@@ -45,7 +45,7 @@ func (dh *DeviceHandle) GetStringDescriptorASCII(
 	descIndex uint8,
 ) (string, error) {
 	// TODO(mdr): Should the length be a constant? Why did I pick 256 bytes?
-	length := 256
+	length := 1024
 	data := make([]byte, length)
 	bytesRead, err := C.libusb_get_string_descriptor_ascii(
 		dh.libusbDeviceHandle,
@@ -60,7 +60,8 @@ func (dh *DeviceHandle) GetStringDescriptorASCII(
 	if bytesRead < 0 {
 		return "", fmt.Errorf("%s", err)
 	}
-	return string(data[0:bytesRead]), nil
+	// return string(data[0:bytesRead]), nil
+	return C.GoString((*C.char)(unsafe.Pointer(&data[0]))), nil
 }
 
 // Close implements libusb_close to close the device handle.
