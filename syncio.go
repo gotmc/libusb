@@ -8,10 +8,7 @@ package libusb
 // #cgo pkg-config: libusb-1.0
 // #include <libusb.h>
 import "C"
-import (
-	"log"
-	"unsafe"
-)
+import "unsafe"
 
 func (dh *DeviceHandle) BulkTransfer(
 	endpoint endpointAddress,
@@ -29,7 +26,6 @@ func (dh *DeviceHandle) BulkTransfer(
 		C.uint(timeout),
 	)
 	if err != 0 {
-		log.Printf("Hit an error on bulk transfer %d\n", err)
 		return 0, ErrorCode(err)
 	}
 	return int(transferred), nil
@@ -92,4 +88,26 @@ func (dh *DeviceHandle) ControlTransfer(
 		return 0, ErrorCode(ret)
 	}
 	return int(ret), nil
+}
+
+// InterruptTransfer performs a USB interrupt transfer.
+func (dh *DeviceHandle) InterruptTransfer(
+	endpoint endpointAddress,
+	data []byte,
+	length int,
+	timeout int,
+) (int, error) {
+	var transferred C.int
+	err := C.libusb_interrupt_transfer(
+		dh.libusbDeviceHandle,
+		C.uchar(endpoint),
+		(*C.uchar)(unsafe.Pointer(&data[0])),
+		C.int(length),
+		&transferred,
+		C.uint(timeout),
+	)
+	if err != 0 {
+		return 0, ErrorCode(err)
+	}
+	return int(transferred), nil
 }
