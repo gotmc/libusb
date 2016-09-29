@@ -9,7 +9,6 @@ package libusb
 // #include <libusb.h>
 import "C"
 import (
-	"fmt"
 	"unsafe"
 )
 
@@ -47,18 +46,15 @@ func (dh *DeviceHandle) GetStringDescriptorASCII(
 	// TODO(mdr): Should the length be a constant? Why did I pick 256 bytes?
 	length := 256
 	data := make([]byte, length)
-	bytesRead, err := C.libusb_get_string_descriptor_ascii(
+	bytesRead, _ := C.libusb_get_string_descriptor_ascii(
 		dh.libusbDeviceHandle,
 		C.uint8_t(descIndex),
 		// Unsafe pointer -> http://stackoverflow.com/a/16376039/95592
 		(*C.uchar)(unsafe.Pointer(&data[0])),
 		C.int(length),
 	)
-	if err != nil {
-		return "", err
-	}
 	if bytesRead < 0 {
-		return "", fmt.Errorf("%s", err)
+		return "", ErrorCode(bytesRead)
 	}
 	return string(data[0:bytesRead]), nil
 }
