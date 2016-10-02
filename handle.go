@@ -154,7 +154,7 @@ func (dh *DeviceHandle) ResetDevice() error {
 func (dh *DeviceHandle) KernelDriverActive(interfaceNum int) (bool, error) {
 	err := C.libusb_kernel_driver_active(
 		dh.libusbDeviceHandle, C.int(interfaceNum))
-	if err == 2 {
+	if err == 1 {
 		return true, nil
 	} else if err != 0 {
 		return false, ErrorCode(err)
