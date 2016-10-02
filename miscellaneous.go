@@ -54,6 +54,13 @@ const (
 	errorNoMem        ErrorCode = C.LIBUSB_ERROR_NO_MEM
 	errorNotSupported ErrorCode = C.LIBUSB_ERROR_NOT_SUPPORTED
 	errorOther        ErrorCode = C.LIBUSB_ERROR_OTHER
+
+	errorTransferError    ErrorCode = C.LIBUSB_TRANSFER_ERROR
+	errorTransferTimedOut ErrorCode = C.LIBUSB_TRANSFER_TIMED_OUT
+	errorTransferCanceled ErrorCode = C.LIBUSB_TRANSFER_CANCELLED
+	errorTransferStall    ErrorCode = C.LIBUSB_TRANSFER_STALL
+	errorTransferNoDevice ErrorCode = C.LIBUSB_TRANSFER_NO_DEVICE
+	errorTransferOverflow ErrorCode = C.LIBUSB_TRANSFER_OVERFLOW
 )
 
 func bcdToDecimal(bcdValue uint16) float64 {

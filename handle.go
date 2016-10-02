@@ -151,13 +151,15 @@ func (dh *DeviceHandle) ResetDevice() error {
 
 // KernelDriverActive implements libusb_kernel_driver_active to determine if a
 // kernel driver is active on an interface.
-func (dh *DeviceHandle) KernelDriverActive(interfaceNum int) error {
+func (dh *DeviceHandle) KernelDriverActive(interfaceNum int) (bool, error) {
 	err := C.libusb_kernel_driver_active(
 		dh.libusbDeviceHandle, C.int(interfaceNum))
-	if err != 0 {
-		return ErrorCode(err)
+	if err == 2 {
+		return true, nil
+	} else if err != 0 {
+		return false, ErrorCode(err)
 	}
-	return nil
+	return false, nil
 }
 
 // DetachKernelDriver implements libusb_detach_kernel_driver to detach a kernel
