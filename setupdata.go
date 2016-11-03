@@ -13,6 +13,7 @@ type bmRequestType byte
 
 type transferDirection byte
 
+// Constants to set the transfer direction.
 const (
 	HostToDevice transferDirection = 0x00
 	DeviceToHost transferDirection = 0x80
@@ -30,6 +31,7 @@ func (dir transferDirection) String() string {
 
 type requestType byte
 
+// Constants representing the libusb request types.
 const (
 	Standard requestType = C.LIBUSB_REQUEST_TYPE_STANDARD
 	Class    requestType = C.LIBUSB_REQUEST_TYPE_CLASS
@@ -50,6 +52,7 @@ func (rt requestType) String() string {
 
 type requestRecipient byte
 
+// Constants representing the libusb recipient types.
 const (
 	DeviceRecipient    requestRecipient = C.LIBUSB_RECIPIENT_DEVICE
 	InterfaceRecipient requestRecipient = C.LIBUSB_RECIPIENT_INTERFACE
@@ -66,13 +69,4 @@ var requestRecipients = map[requestRecipient]string{
 
 func (r requestRecipient) String() string {
 	return requestRecipients[r]
-}
-
-func BitmapRequestType(
-	reqDirection transferDirection,
-	reqType requestType,
-	reqRecipient requestRecipient,
-) bmRequestType {
-	return bmRequestType(
-		byte(reqDirection) | byte(reqType) | byte(reqRecipient))
 }

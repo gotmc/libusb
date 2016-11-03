@@ -1,4 +1,4 @@
-// Copyright (c) 2015 The libusb developers. All rights reserved.
+// Copyright (c) 2015-2016 The libusb developers. All rights reserved.
 // Project site: https://github.com/gotmc/libusb
 // Use of this source code is governed by a MIT-style license that
 // can be found in the LICENSE.txt file for the project.
@@ -9,12 +9,16 @@ package libusb
 // #include <libusb.h>
 import "C"
 
+// Endpoint doesn't seem to model anything. Did I replace this with
+// EndpointDescriptor?
 type Endpoint struct {
+	// FIXME(mdr): Is this needed/used? Can this safely be deleted?
 }
 
 type endpointAddress byte
 type endpointAttributes byte
 
+// EndpointDescriptor models the descriptor for a given endpoint.
 type EndpointDescriptor struct {
 	Length          int
 	DescriptorType  descriptorType
@@ -26,10 +30,13 @@ type EndpointDescriptor struct {
 	SynchAddress    uint8
 }
 
+// EndpointDescriptors contains the available endpoint descriptors.
 type EndpointDescriptors []*EndpointDescriptor
 
 // Direction returns the endpointDirection.
 func (end *EndpointDescriptor) Direction() endpointDirection {
+	// FIXME(mdr): Is this funciton needed? What purpose does it serve? If I'm
+	// keeping it, I should not return an unexported type.
 	return end.EndpointAddress.direction()
 }
 
@@ -38,7 +45,11 @@ func (end *EndpointDescriptor) Direction() endpointDirection {
 func (end *EndpointDescriptor) Number() byte {
 	return end.EndpointAddress.endpointNumber()
 }
+
+// TransferType returns the transfer type for an endpoint.
 func (end *EndpointDescriptor) TransferType() transferType {
+	// FIXME(mdr): Is this funciton needed? What purpose does it serve? If I'm
+	// keeping it, I should not return an unexported type.
 	return end.Attributes.transferType()
 }
 

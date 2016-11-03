@@ -11,7 +11,9 @@ This file lists the authors, maintainers, and contributors for the
 
 ## Contributors
 - [rojer][]
+- [jpoirier][]
 
 [libusb]: https://github.com/gotmc/libusb
 [mdr]: https://github.com/matthewrankin
+[jpoirier]: https://github.com/jpoirier
 [rojer]: https://github.com/rojer

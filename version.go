@@ -1,4 +1,4 @@
-// Copyright (c) 2015 The libusb developers. All rights reserved.
+// Copyright (c) 2015-2016 The libusb developers. All rights reserved.
 // Project site: https://github.com/gotmc/libusb
 // Use of this source code is governed by a MIT-style license that
 // can be found in the LICENSE.txt file for the project.
@@ -10,7 +10,7 @@ package libusb
 import "C"
 
 // The Version struct represents the libusb version.
-type version struct {
+type Version struct {
 	Major            uint16
 	Minor            uint16
 	Micro            uint16
@@ -20,10 +20,10 @@ type version struct {
 }
 
 // GetVersion gets the libusb version and returns a Version struct.
-func GetVersion() version {
+func GetVersion() Version {
 	var cVersion C.struct_libusb_version
 	cVersion = *C.libusb_get_version()
-	version := version{
+	version := Version{
 		Major:            uint16(cVersion.major),
 		Minor:            uint16(cVersion.minor),
 		Micro:            uint16(cVersion.micro),

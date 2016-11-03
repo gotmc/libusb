@@ -1,4 +1,4 @@
-// Copyright (c) 2015 The libusb developers. All rights reserved.
+// Copyright (c) 2015-2016 The libusb developers. All rights reserved.
 // Project site: https://github.com/gotmc/libusb
 // Use of this source code is governed by a MIT-style license that
 // can be found in the LICENSE.txt file for the project.
@@ -10,6 +10,7 @@ package libusb
 import "C"
 import "unsafe"
 
+// BulkTransfer implements libusb_bulk_transfer to perform a USB bulk transfer.
 func (dh *DeviceHandle) BulkTransfer(
 	endpoint endpointAddress,
 	data []byte,
@@ -31,6 +32,7 @@ func (dh *DeviceHandle) BulkTransfer(
 	return int(transferred), nil
 }
 
+// BulkTransferOut is a helper method that performs a USB bulk output transfer.
 func (dh *DeviceHandle) BulkTransferOut(
 	endpoint endpointAddress,
 	data []byte,
@@ -44,6 +46,7 @@ func (dh *DeviceHandle) BulkTransferOut(
 	)
 }
 
+// BulkTransferIn is a helper method that performs a USB bulk input transfer.
 func (dh *DeviceHandle) BulkTransferIn(
 	endpoint endpointAddress,
 	maxReceiveBytes int,
@@ -64,7 +67,6 @@ func (dh *DeviceHandle) BulkTransferIn(
 
 // ControlTransfer sends a transfer using a control endpoint for the given
 // device handle.
-// FIXME: Should I be using uint16, uint, or just int?
 func (dh *DeviceHandle) ControlTransfer(
 	requestType bmRequestType,
 	request byte,

@@ -1,4 +1,4 @@
-// Copyright (c) 2015 The libusb developers. All rights reserved.
+// Copyright (c) 2015-2016 The libusb developers. All rights reserved.
 // Project site: https://github.com/gotmc/libusb
 // Use of this source code is governed by a MIT-style license that
 // can be found in the LICENSE.txt file for the project.
@@ -17,6 +17,7 @@ type DeviceHandle struct {
 	libusbDeviceHandle *C.libusb_device_handle
 }
 
+// GetStringDescriptor retrieves a descriptor from a device.
 func (dh *DeviceHandle) GetStringDescriptor(
 	descIndex uint8,
 	langID uint16,
@@ -114,6 +115,7 @@ func (dh *DeviceHandle) ReleaseInterface(interfaceNum int) error {
 	return nil
 }
 
+// SetInterfaceAltSetting activates an alternate setting for an interface.
 func (dh *DeviceHandle) SetInterfaceAltSetting(
 	interfaceNum int,
 	alternateSetting int,
@@ -148,12 +150,12 @@ func (dh *DeviceHandle) ResetDevice() error {
 // KernelDriverActive implements libusb_kernel_driver_active to determine if a
 // kernel driver is active on an interface.
 func (dh *DeviceHandle) KernelDriverActive(interfaceNum int) (bool, error) {
-	err := C.libusb_kernel_driver_active(
+	ret := C.libusb_kernel_driver_active(
 		dh.libusbDeviceHandle, C.int(interfaceNum))
-	if err == 1 {
+	if ret == 1 {
 		return true, nil
-	} else if err != 0 {
-		return false, ErrorCode(err)
+	} else if ret != 0 {
+		return false, ErrorCode(ret)
 	}
 	return false, nil
 }
