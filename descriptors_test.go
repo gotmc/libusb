@@ -10,6 +10,11 @@ import (
 	"testing"
 )
 
+const (
+	failCheck = `✗` // UTF-8 u2717
+	passCheck = `✓` // UTF-8 u2713
+)
+
 func TestBcdType(t *testing.T) {
 	testCases := []struct {
 		bcdValue   uint16

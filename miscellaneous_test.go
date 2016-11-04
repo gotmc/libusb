@@ -8,8 +8,6 @@ package libusb
 import (
 	"fmt"
 	"testing"
-
-	c "github.com/smartystreets/goconvey/convey"
 )
 
 func ExampleErrorCode_Error() {
@@ -48,8 +46,8 @@ func ExampleErrorCode_Error() {
 
 func TestBcdToDecimal(t *testing.T) {
 	testCases := []struct {
-		bcdValue     uint16
-		decimalValue float64
+		bcdValue uint16
+		want     float64
 	}{
 		{0x0110, 1.1},
 		{0x0200, 2.0},
@@ -57,16 +55,13 @@ func TestBcdToDecimal(t *testing.T) {
 		{0x0300, 3.0},
 		{0x0310, 3.1},
 	}
-	c.Convey("Given the need to convert BCD values into decimal", t, func() {
-		for _, testCase := range testCases {
-			conveyance := fmt.Sprintf("When the BCD value is 0x%X", testCase.bcdValue)
-			c.Convey(conveyance, func() {
-				conveyance := fmt.Sprintf("Then the decimal value should be %2.2f", testCase.decimalValue)
-				c.Convey(conveyance, func() {
-					computedValue := bcdToDecimal(testCase.bcdValue)
-					c.So(computedValue, c.ShouldEqual, testCase.decimalValue)
-				})
-			})
+	for _, tc := range testCases {
+		if got := bcdToDecimal(tc.bcdValue); got != tc.want {
+			t.Errorf(
+				"Error converting BCD to decimal\n\tgot %v; want %v",
+				got,
+				tc.want,
+			)
 		}
-	})
+	}
 }

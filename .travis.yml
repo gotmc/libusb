@@ -4,9 +4,6 @@ go:
   - 1.7
   - 1.6
 
-install:
-  - go get github.com/smartystreets/goconvey/convey
-
 script: go test ./...
 
 addons:
