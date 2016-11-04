@@ -3,12 +3,13 @@ language: go
 go:
   - 1.7
 
+sudo: required
+
 script:
-  - go test -v ./...
+  - sudo go test -v ./...
 
 addons:
   apt:
     packages:
       libusb-1.0-0-dev
-
-sudo: required
+      libusb-1.0-0
