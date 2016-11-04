@@ -2,9 +2,9 @@ language: go
 
 go:
   - 1.7
-  - 1.6
 
-script: go test ./...
+script:
+  - go test -v ./...
 
 addons:
   apt:
