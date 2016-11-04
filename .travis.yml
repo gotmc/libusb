@@ -1,15 +1,13 @@
 language: go
 
+os:
+  - osx
+
 go:
   - 1.7
 
-sudo: required
-
 script:
-  - sudo go test -v ./...
+  - go test -v ./...
 
-addons:
-  apt:
-    packages:
-      libusb-1.0-0-dev
-      libusb-1.0-0
+before_install:
+  brew install libusb
