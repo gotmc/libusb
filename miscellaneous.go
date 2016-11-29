@@ -39,6 +39,13 @@ func SetLocale(locale string) ErrorCode {
 	return ErrorCode(C.libusb_setlocale(C.CString(locale)))
 }
 
+// CPUtoLE16 converts "a 16-bit value from host-endian to little-endian format.
+// On little endian systems, this function does nothing. On big endian systems,
+// the bytes are swapped.
+func CPUtoLE16(value int) int {
+	return int(C.libusb_cpu_to_le16(C.uint16_t(value)))
+}
+
 const (
 	success           ErrorCode = C.LIBUSB_SUCCESS
 	errorIo           ErrorCode = C.LIBUSB_ERROR_IO
