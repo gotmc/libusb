@@ -46,6 +46,16 @@ func CPUtoLE16(value int) int {
 	return int(C.libusb_cpu_to_le16(C.uint16_t(value)))
 }
 
+// HasCapability checks "at runtime if the loaded library has a given
+// capability. This call should be performed after libusb_init(), to ensure
+// the backend has updated its capability set." (Source: libusb docs)
+func HasCapability(capability int) bool {
+	if C.libusb_has_capability(C.uint32_t(capability)) != 0 {
+		return true
+	}
+	return false
+}
+
 const (
 	success           ErrorCode = C.LIBUSB_SUCCESS
 	errorIo           ErrorCode = C.LIBUSB_ERROR_IO
