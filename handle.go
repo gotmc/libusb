@@ -38,9 +38,9 @@ func (dh *DeviceHandle) GetStringDescriptor(
 	return C.GoString(data), nil
 }
 
-// GetStringDescriptorASCII is a wrapper around the
-// C.libusb_string_descriptor_ascii function which retrieves an ASCII string
-// descriptor using the given index of the descriptor to retrieve.
+// GetStringDescriptorASCII retrieve(s) a string descriptor in C style ASCII.
+// Wrapper around libusb_get_string_descriptor(). Uses the first language
+// supported by the device. (Source: libusb docs)
 func (dh *DeviceHandle) GetStringDescriptorASCII(
 	descIndex uint8,
 ) (string, error) {

@@ -270,3 +270,29 @@ func (dev *Device) GetConfigDescriptor(configIndex int) (*ConfigDescriptor, erro
 	}
 	return configuration, nil
 }
+
+// GetConfigDescriptorByValue gets "a USB configuration descriptor with a
+// specific bConfigurationValue. This is a non-blocking function which does not
+// involve any requests being sent to the device. (Source: libusb docs)
+func (dev *Device) GetConfigDescriptorByValue(configValue int) (*ConfigDescriptor, error) {
+	var cConfig *C.struct_libusb_config_descriptor
+	err := C.libusb_get_config_descriptor_by_value(
+		dev.libusbDevice, C.uint8_t(configValue), &cConfig,
+	)
+	defer C.libusb_free_config_descriptor(cConfig)
+	if err != 0 {
+		return nil, ErrorCode(err)
+	}
+	configuration := &ConfigDescriptor{
+		Length:               int(cConfig.bLength),
+		DescriptorType:       descriptorType(cConfig.bDescriptorType),
+		TotalLength:          uint16(cConfig.wTotalLength),
+		NumInterfaces:        int(cConfig.bNumInterfaces),
+		ConfigurationValue:   uint8(cConfig.bConfigurationValue),
+		ConfigurationIndex:   uint8(cConfig.iConfiguration),
+		Attributes:           uint8(cConfig.bmAttributes),
+		MaxPowerMilliAmperes: 2 * uint(cConfig.MaxPower), // Convert from 2 mA to just mA
+		SupportedInterfaces:  nil,
+	}
+	return configuration, nil
+}
