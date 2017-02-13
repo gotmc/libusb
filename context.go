@@ -16,7 +16,9 @@ import (
 
 type logLevel int
 
-// Log level enumeration
+// Log message levels
+//
+// http://bit.ly/enum_libusb_log_level
 const (
 	LogLevelNone    logLevel = C.LIBUSB_LOG_LEVEL_NONE
 	LogLevelError   logLevel = C.LIBUSB_LOG_LEVEL_ERROR

@@ -138,20 +138,21 @@ func (endpointDirection endpointDirection) String() string {
 
 type transferType int
 
+// Endpoint transfer type http://bit.ly/enum_libusb_transfer_type
 const (
-	controlTransfer     transferType = C.LIBUSB_TRANSFER_TYPE_CONTROL
-	isochronousTransfer transferType = C.LIBUSB_TRANSFER_TYPE_ISOCHRONOUS
-	bulkTransfer        transferType = C.LIBUSB_TRANSFER_TYPE_BULK
-	interruptTransfer   transferType = C.LIBUSB_TRANSFER_TYPE_INTERRUPT
-	bulkStreamTransfer  transferType = C.LIBUSB_TRANSFER_TYPE_BULK_STREAM
+	ControlTransfer     transferType = C.LIBUSB_TRANSFER_TYPE_CONTROL
+	IsochronousTransfer transferType = C.LIBUSB_TRANSFER_TYPE_ISOCHRONOUS
+	BulkTransfer        transferType = C.LIBUSB_TRANSFER_TYPE_BULK
+	InterruptTransfer   transferType = C.LIBUSB_TRANSFER_TYPE_INTERRUPT
+	BulkStreamTransfer  transferType = C.LIBUSB_TRANSFER_TYPE_BULK_STREAM
 )
 
 var transferTypes = map[transferType]string{
-	controlTransfer:     "Control endpoint.",
-	isochronousTransfer: "Isochronous endpoint.",
-	bulkTransfer:        "Bulk endpoint.",
-	interruptTransfer:   "Interrupt endpoint.",
-	bulkStreamTransfer:  "Stream endpoint.",
+	ControlTransfer:     "Control endpoint.",
+	IsochronousTransfer: "Isochronous endpoint.",
+	BulkTransfer:        "Bulk endpoint.",
+	InterruptTransfer:   "Interrupt endpoint.",
+	BulkStreamTransfer:  "Stream endpoint.",
 }
 
 func (transferType transferType) String() string {
@@ -165,9 +166,12 @@ type GenericDescriptor struct {
 
 type synchronizationType byte
 
+// Synchronization type for isochronous endpoints. "Values for bits 2:3 of the
+// bmAttributes field in libusb_endpoint_descriptor"
+// http://bit.ly/enum_libusb_iso_sync_type
 const (
-	NoSync   synchronizationType = C.LIBUSB_ISO_SYNC_TYPE_NONE
-	Async    synchronizationType = C.LIBUSB_ISO_SYNC_TYPE_ASYNC
-	Adaptive synchronizationType = C.LIBUSB_ISO_SYNC_TYPE_ADAPTIVE
-	Sync     synchronizationType = C.LIBUSB_ISO_SYNC_TYPE_SYNC
+	IsoSyncTypeNone     synchronizationType = C.LIBUSB_ISO_SYNC_TYPE_NONE
+	IsoSyncTypeAsync    synchronizationType = C.LIBUSB_ISO_SYNC_TYPE_ASYNC
+	IsoSyncTypeAdaptive synchronizationType = C.LIBUSB_ISO_SYNC_TYPE_ADAPTIVE
+	IsoSynceTypeSync    synchronizationType = C.LIBUSB_ISO_SYNC_TYPE_SYNC
 )
