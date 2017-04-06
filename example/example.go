@@ -10,6 +10,7 @@ import (
 	"encoding/binary"
 	"fmt"
 	"log"
+	"time"
 
 	"github.com/gotmc/libusb"
 )
@@ -40,8 +41,12 @@ func main() {
 		log.Fatal("Couldn't create USB context. Ending now.")
 	}
 	defer ctx.Exit()
+	start := time.Now()
 	devices, _ := ctx.GetDeviceList()
-	fmt.Printf("Found %v USB devices.\n", len(devices))
+	fmt.Printf("Found %v USB devices (%.4fs elapsed).\n",
+		len(devices),
+		time.Since(start).Seconds(),
+	)
 	for _, usbDevice := range devices {
 		deviceAddress, _ := usbDevice.GetDeviceAddress()
 		deviceSpeed, _ := usbDevice.GetDeviceSpeed()
