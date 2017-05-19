@@ -143,7 +143,6 @@ func TestTransferTypeStringMethod(t *testing.T) {
 		{IsochronousTransfer, "Isochronous endpoint."},
 		{BulkTransfer, "Bulk endpoint."},
 		{InterruptTransfer, "Interrupt endpoint."},
-		{BulkStreamTransfer, "Stream endpoint."},
 	}
 	t.Log("Given the need to test the endpointDirection.String() method")
 	{

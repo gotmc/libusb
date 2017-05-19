@@ -144,7 +144,6 @@ const (
 	IsochronousTransfer transferType = C.LIBUSB_TRANSFER_TYPE_ISOCHRONOUS
 	BulkTransfer        transferType = C.LIBUSB_TRANSFER_TYPE_BULK
 	InterruptTransfer   transferType = C.LIBUSB_TRANSFER_TYPE_INTERRUPT
-	BulkStreamTransfer  transferType = C.LIBUSB_TRANSFER_TYPE_BULK_STREAM
 )
 
 var transferTypes = map[transferType]string{
@@ -152,7 +151,6 @@ var transferTypes = map[transferType]string{
 	IsochronousTransfer: "Isochronous endpoint.",
 	BulkTransfer:        "Bulk endpoint.",
 	InterruptTransfer:   "Interrupt endpoint.",
-	BulkStreamTransfer:  "Stream endpoint.",
 }
 
 func (transferType transferType) String() string {

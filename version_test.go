@@ -10,10 +10,8 @@ import "testing"
 func TestGetVersion(t *testing.T) {
 	const major = 1
 	const minor = 0
-	const micro = 21
-	const nano = 11156
+	const minMicro = 17
 	releaseCandidate := ""
-	describe := "http://libusb.info"
 	version := GetVersion()
 	if version.Major != major {
 		t.Errorf(
@@ -25,24 +23,14 @@ func TestGetVersion(t *testing.T) {
 			"Minor version == %d, want %d",
 			version.Minor, minor)
 	}
-	if version.Micro != micro {
+	if version.Micro < minMicro {
 		t.Errorf(
-			"Micro version == %d, want %d",
-			version.Micro, micro)
-	}
-	if version.Nano != nano {
-		t.Errorf(
-			"Nano version == %d, want %d",
-			version.Nano, nano)
+			"Micro version == %d, need at least %d",
+			version.Micro, minMicro)
 	}
 	if version.ReleaseCandidate != releaseCandidate {
 		t.Errorf(
 			"ReleaseCandidate == %v, want %v",
 			version.ReleaseCandidate, releaseCandidate)
-	}
-	if version.Describe != describe {
-		t.Errorf(
-			"Describe == %v, want %v",
-			version.Describe, describe)
 	}
 }
