@@ -1,18 +1,22 @@
 language: go
 
-os:
-  - linux
-  - osx
+matrix:
+  include:
+    - os: linux
+      dist: trusty
+      sudo: false
+      addon:
+        apt:
+          packages:
+            - libusb-1.0
+            - libusb-1.0-dev
+    - os: osx
+      osx_image: xcode7.2
 
 go:
-  - 1.7.x
+  # - 1.7.x
   - 1.8.x
 
-addon:
-  apt:
-    packages:
-      - libusb-1.0-0
-      - libusb-1.0-0-dev
 script:
   - go test -v ./...
 
