@@ -1,16 +1,21 @@
 language: go
 
 os:
-  - osx
   - linux
+  - osx
 
 go:
   - 1.7.x
   - 1.8.x
 
+addon:
+  apt:
+    packages:
+      - libusb-1.0-0
+      - libusb-1.0-0-dev
 script:
   - go test -v ./...
 
 before_install:
   - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew update; brew install libusb; fi
-  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then sudo apt-get install libusb-dev libusb-1.0-0 libusb-1.0-0-dev; fi
+  # - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then sudo apt-get install libusb-dev libusb-1.0-0 libusb-1.0-0-dev; fi
