@@ -1,21 +1,13 @@
 language: go
-
-os:
-  - linux
-
 dist: trusty
-sudo: required
 
 go:
-  - 1.8.x
+  - 1.8
+
+addons:
+  apt:
+    packages:
+      libusb-1.0-0-dev
 
 script:
   - go test -v ./...
-
-before_install:
-  - sudo apt-get install libusb-dev libusb-1.0-0 libusb-1.0-0-dev
-  - whoami
-  - go env && pwd
-  - sudo sh -c 'echo "SUBSYSTEM==\"usb\", ENV{DEVTYPE}==\"usb_device\", MODE=\"0664\", GROUP=\"usbusers\"" > /etc/udev/rules.d/libusb.rules'
-  - sudo groupadd usbusers
-  - sudo adduser travis usbusers
