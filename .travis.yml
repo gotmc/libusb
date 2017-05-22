@@ -10,7 +10,7 @@ go:
   - 1.8.x
 
 script:
-  - go test -v ./...
+  - sudo go test -v ./...
 
 before_install:
   - sudo apt-get install libusb-dev libusb-1.0-0 libusb-1.0-0-dev
