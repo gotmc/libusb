@@ -1,13 +1,15 @@
 language: go
-dist: trusty
+
+os:
+  - osx
 
 go:
+  - 1.7
   - 1.8
-
-addons:
-  apt:
-    packages:
-      libusb-1.0-0-dev
 
 script:
   - go test -v ./...
+
+before_install:
+  brew install libusb
+
