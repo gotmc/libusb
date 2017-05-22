@@ -7,34 +7,6 @@ package libusb
 
 import "testing"
 
-func TestInitContext(t *testing.T) {
-	if _, err := Init(); err != nil {
-		t.Errorf(
-			"Error initializing new libusb context:\n\tgot %v want %v",
-			err,
-			nil,
-		)
-	}
-}
-
-func TestExitContext(t *testing.T) {
-	context, _ := Init()
-	if err := context.Exit(); err != nil {
-		t.Errorf(
-			"Error exiting context:\n\tgot %v want %v",
-			err,
-			nil,
-		)
-	}
-	if context.libusbContext != nil {
-		t.Errorf(
-			"Context field still exists after exiting:\n\tgot %v want %v",
-			context.libusbContext,
-			nil,
-		)
-	}
-}
-
 func TestSetDebugLevel(t *testing.T) {
 	testCases := []struct {
 		lev logLevel
