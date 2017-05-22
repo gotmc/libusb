@@ -17,4 +17,5 @@ before_install:
   - whoami
   - go env && pwd
   - sudo sh -c 'echo "SUBSYSTEM==\"usb\", ENV{DEVTYPE}==\"usb_device\", MODE=\"0664\", GROUP=\"usbusers\"" > /etc/udev/rules.d/libusb.rules'
+  - sudo groupadd usbusers
   - sudo adduser travis usbusers
