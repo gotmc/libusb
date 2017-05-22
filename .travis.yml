@@ -14,3 +14,4 @@ script:
 
 before_install:
   - sudo apt-get install libusb-dev libusb-1.0-0 libusb-1.0-0-dev
+  - go env && pwd
