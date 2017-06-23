@@ -17,9 +17,9 @@ func TestNewContext(t *testing.T) {
 	}
 }
 
-func TestExitContext(t *testing.T) {
+func TestCloseContext(t *testing.T) {
 	context, _ := NewContext()
-	if err := context.Exit(); err != nil {
+	if err := context.Close(); err != nil {
 		t.Errorf(
 			"Error exiting context:\n\tgot %v want %v",
 			err,
@@ -74,7 +74,7 @@ func TestLogLevelStringMethod(t *testing.T) {
 
 func TestGetDeviceList(t *testing.T) {
 	context, _ := NewContext()
-	defer context.Exit()
+	defer context.Close()
 	devices, err := context.GetDeviceList()
 	if err != nil {
 		t.Errorf(

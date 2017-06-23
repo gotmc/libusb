@@ -59,8 +59,8 @@ func NewContext() (*Context, error) {
 	return newContext, nil
 }
 
-// Exit deinitializes the libusb session/context.
-func (ctx *Context) Exit() error {
+// Close deinitializes the libusb session/context.
+func (ctx *Context) Close() error {
 	C.libusb_exit(ctx.libusbContext)
 	ctx.libusbContext = nil
 	return nil

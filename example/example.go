@@ -40,7 +40,7 @@ func main() {
 	if err != nil {
 		log.Fatal("Couldn't create USB context. Ending now.")
 	}
-	defer ctx.Exit()
+	defer ctx.Close()
 	start := time.Now()
 	devices, _ := ctx.GetDeviceList()
 	fmt.Printf("Found %v USB devices (%.4fs elapsed).\n",

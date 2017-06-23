@@ -16,7 +16,7 @@ func main() {
 	if err != nil {
 		log.Fatal("Couldn't create USB context. Ending now.")
 	}
-	defer ctx.Exit()
+	defer ctx.Close()
 	devices, err := ctx.GetDeviceList()
 	if err != nil {
 		log.Fatalf("Couldn't get devices")

@@ -13,7 +13,7 @@ import (
 
 func main() {
 	ctx, _ := libusb.NewContext()
-	defer ctx.Exit()
+	defer ctx.Close()
 	devices, _ := ctx.GetDeviceList()
 	for _, device := range devices {
 		usbDeviceDescriptor, _ := device.GetDeviceDescriptor()
