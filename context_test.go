@@ -7,8 +7,8 @@ package libusb
 
 import "testing"
 
-func TestInitContext(t *testing.T) {
-	if _, err := Init(); err != nil {
+func TestNewContext(t *testing.T) {
+	if _, err := NewContext(); err != nil {
 		t.Errorf(
 			"Error initializing new libusb context:\n\tgot %v want %v",
 			err,
@@ -18,7 +18,7 @@ func TestInitContext(t *testing.T) {
 }
 
 func TestExitContext(t *testing.T) {
-	context, _ := Init()
+	context, _ := NewContext()
 	if err := context.Exit(); err != nil {
 		t.Errorf(
 			"Error exiting context:\n\tgot %v want %v",
@@ -46,7 +46,7 @@ func TestSetDebugLevel(t *testing.T) {
 		{LogLevelDebug},
 	}
 	for _, tc := range testCases {
-		context, _ := Init()
+		context, _ := NewContext()
 		context.SetDebug(tc.lev)
 		if got := context.LogLevel; got != tc.lev {
 			t.Errorf("got %v; want %v", got, tc.lev)
@@ -73,7 +73,7 @@ func TestLogLevelStringMethod(t *testing.T) {
 }
 
 func TestGetDeviceList(t *testing.T) {
-	context, _ := Init()
+	context, _ := NewContext()
 	defer context.Exit()
 	devices, err := context.GetDeviceList()
 	if err != nil {

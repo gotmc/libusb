@@ -12,7 +12,7 @@ import (
 )
 
 func main() {
-	ctx, _ := libusb.Init()
+	ctx, _ := libusb.NewContext()
 	defer ctx.Exit()
 	devices, _ := ctx.GetDeviceList()
 	for _, device := range devices {

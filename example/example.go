@@ -36,7 +36,7 @@ func showVersion() {
 
 func main() {
 	showVersion()
-	ctx, err := libusb.Init()
+	ctx, err := libusb.NewContext()
 	if err != nil {
 		log.Fatal("Couldn't create USB context. Ending now.")
 	}

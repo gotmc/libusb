@@ -12,7 +12,7 @@ import (
 )
 
 func main() {
-	ctx, err := libusb.Init()
+	ctx, err := libusb.NewContext()
 	if err != nil {
 		log.Fatal("Couldn't create USB context. Ending now.")
 	}

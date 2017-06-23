@@ -45,9 +45,9 @@ type Context struct {
 	LogLevel      logLevel
 }
 
-// Init intializes a new libusb session/context by creating a new Context and
-// returning a pointer to that Context.
-func Init() (*Context, error) {
+// NewContext intializes a new libusb session/context by creating a new
+// Context and returning a pointer to that Context.
+func NewContext() (*Context, error) {
 	newContext := &Context{
 		LogLevel: LogLevelNone,
 	}
