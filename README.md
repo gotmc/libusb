@@ -31,7 +31,7 @@ Download and install the latest Windows libusb binaries from
 ### Linux
 
 ```bash
-$ sudo apt-get install -y libusb-dev libusb-1.0-0 libusb-1.0-0-dev
+$ sudo apt-get install -y libusb-dev libusb-1.0-0-dev
 ```
 
 ## Documentation
