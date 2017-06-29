@@ -12,6 +12,28 @@ Go bindings for the [libusb C library][libusb-c].
 $ go get github.com/gotmc/libusb
 ```
 
+### Installing C libusb library
+
+To use [libusb][] package, you'll need to install the [libusb C
+library][libusb-c] first.
+
+### OS X
+
+```bash
+$ brew install libusb
+```
+
+### Windows
+
+Download and install the latest Windows libusb binaries from
+[libusb.info][libusb-c].
+
+### Linux
+
+```bash
+$ sudo apt-get install -y libusb-dev libusb-1.0-0 libusb-1.0-0-dev
+```
+
 ## Documentation
 
 Documentation can be found at either:
