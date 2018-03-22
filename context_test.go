@@ -37,7 +37,7 @@ func TestCloseContext(t *testing.T) {
 
 func TestSetDebugLevel(t *testing.T) {
 	testCases := []struct {
-		lev logLevel
+		lev LogLevel
 	}{
 		{LogLevelNone},
 		{LogLevelError},
@@ -56,7 +56,7 @@ func TestSetDebugLevel(t *testing.T) {
 
 func TestLogLevelStringMethod(t *testing.T) {
 	testCases := []struct {
-		logLevel logLevel
+		logLevel LogLevel
 		want     string
 	}{
 		{LogLevelNone, "No messages ever printed by the library (default)"},

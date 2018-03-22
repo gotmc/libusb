@@ -14,20 +14,20 @@ import (
 	"unsafe"
 )
 
-type logLevel int
+type LogLevel int
 
 // Log message levels
 //
 // http://bit.ly/enum_libusb_log_level
 const (
-	LogLevelNone    logLevel = C.LIBUSB_LOG_LEVEL_NONE
-	LogLevelError   logLevel = C.LIBUSB_LOG_LEVEL_ERROR
-	LogLevelWarning logLevel = C.LIBUSB_LOG_LEVEL_WARNING
-	LogLevelInfo    logLevel = C.LIBUSB_LOG_LEVEL_INFO
-	LogLevelDebug   logLevel = C.LIBUSB_LOG_LEVEL_DEBUG
+	LogLevelNone    LogLevel = C.LIBUSB_LOG_LEVEL_NONE
+	LogLevelError   LogLevel = C.LIBUSB_LOG_LEVEL_ERROR
+	LogLevelWarning LogLevel = C.LIBUSB_LOG_LEVEL_WARNING
+	LogLevelInfo    LogLevel = C.LIBUSB_LOG_LEVEL_INFO
+	LogLevelDebug   LogLevel = C.LIBUSB_LOG_LEVEL_DEBUG
 )
 
-var logLevels = map[logLevel]string{
+var logLevels = map[LogLevel]string{
 	LogLevelNone:    "No messages ever printed by the library (default)",
 	LogLevelError:   "Error messages are printed to stderr",
 	LogLevelWarning: "Warning and error messages are printed to stderr",
@@ -35,14 +35,14 @@ var logLevels = map[logLevel]string{
 	LogLevelDebug:   "Debug and informational messages are printed to stdout, warnings and errors to stderr",
 }
 
-func (level logLevel) String() string {
+func (level LogLevel) String() string {
 	return logLevels[level]
 }
 
 // Context represents a libusb session/context.
 type Context struct {
 	libusbContext *C.libusb_context
-	LogLevel      logLevel
+	LogLevel      LogLevel
 }
 
 // NewContext intializes a new libusb session/context by creating a new
@@ -67,7 +67,7 @@ func (ctx *Context) Close() error {
 }
 
 // SetDebug sets the log message verbosity.
-func (ctx *Context) SetDebug(level logLevel) {
+func (ctx *Context) SetDebug(level LogLevel) {
 	C.libusb_set_debug(ctx.libusbContext, C.int(level))
 	ctx.LogLevel = level
 	return
