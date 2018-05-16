@@ -7,6 +7,9 @@ package libusb
 
 // #cgo pkg-config: libusb-1.0
 // #include <libusb.h>
+// int set_debug(libusb_context * ctx, int level) {
+//   return libusb_set_option(ctx, LIBUSB_OPTION_LOG_LEVEL, level);
+// }
 import "C"
 import (
 	"fmt"
@@ -68,7 +71,7 @@ func (ctx *Context) Close() error {
 
 // SetDebug sets the log message verbosity.
 func (ctx *Context) SetDebug(level LogLevel) {
-	C.libusb_set_debug(ctx.libusbContext, C.int(level))
+	C.set_debug(ctx.libusbContext, C.int(level))
 	ctx.LogLevel = level
 	return
 }
