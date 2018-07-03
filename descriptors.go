@@ -159,9 +159,6 @@ func (transferType transferType) String() string {
 
 // TODO(mdr): May want to replace uint8 with a type specific for indexes.
 
-type GenericDescriptor struct {
-}
-
 type synchronizationType byte
 
 // Synchronization type for isochronous endpoints. "Values for bits 2:3 of the
