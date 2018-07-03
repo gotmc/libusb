@@ -17,6 +17,7 @@ import (
 	"unsafe"
 )
 
+// LogLevel is an enum for the C libusb log message levels.
 type LogLevel int
 
 // Log message levels
