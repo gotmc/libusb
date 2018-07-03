@@ -9,4 +9,7 @@ go:
   - 1.10
 
 script:
-  - go test -v ./...
+  - go test -v ./..e
+
+before_install:
+  - brew install libusb
