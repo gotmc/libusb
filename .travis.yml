@@ -12,4 +12,4 @@ script:
   - go test -v ./..e
 
 before_install:
-  - brew install libusb
+  - brew upgrade libusb
