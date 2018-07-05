@@ -4,12 +4,12 @@ os:
   - osx
 
 go:
-  - 1.8
-  - 1.9
-  - 1.10
+  - "1.8.x"
+  - "1.9.x"
+  - "1.10.x"
 
 script:
-  - go test -v ./..e
+  - go test -v ./..
 
 before_install:
   - brew upgrade libusb
