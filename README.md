@@ -7,13 +7,13 @@ Go bindings for the [libusb C library][libusb-c].
 [![Build Status][travis image]][travis link]
 [![License Badge][license image]][LICENSE.txt]
 
-## Installation
+# Installation
 
 ```bash
 $ go get github.com/gotmc/libusb
 ```
 
-### Installing C libusb library
+## Installing C libusb library
 
 To use [libusb][] package, you'll need to install the [libusb C
 library][libusb-c] first.
@@ -35,7 +35,7 @@ Download and install the latest Windows libusb binaries from
 $ sudo apt-get install -y libusb-dev libusb-1.0-0-dev
 ```
 
-## Documentation
+# Documentation
 
 Documentation can be found at either:
 
@@ -43,7 +43,7 @@ Documentation can be found at either:
 - <http://localhost:6060/pkg/github.com/gotmc/libusb/> after running `$
   godoc -http=:6060`
 
-## Contributing
+# Contributing
 
 [libusb][] is developed using [Scott Chacon][]'s [GitHub Flow][]. To
 contribute, fork [libusb][], create a feature branch, and then
@@ -61,7 +61,7 @@ submit a [pull request][].  [GitHub Flow][] is summarized as:
 - Once it is merged and pushed to `master`, you can and *should* deploy
   immediately.
 
-## Testing
+# Testing
 
 Prior to submitting a [pull request][], please run:
 
