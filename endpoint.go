@@ -34,7 +34,7 @@ type EndpointDescriptor struct {
 type EndpointDescriptors []*EndpointDescriptor
 
 // Direction returns the endpointDirection.
-func (end *EndpointDescriptor) Direction() endpointDirection {
+func (end *EndpointDescriptor) Direction() EndpointDirection {
 	// FIXME(mdr): Is this funciton needed? What purpose does it serve? If I'm
 	// keeping it, I should not return an unexported type.
 	return end.EndpointAddress.direction()
@@ -47,17 +47,17 @@ func (end *EndpointDescriptor) Number() byte {
 }
 
 // TransferType returns the transfer type for an endpoint.
-func (end *EndpointDescriptor) TransferType() transferType {
+func (end *EndpointDescriptor) TransferType() TransferType {
 	// FIXME(mdr): Is this funciton needed? What purpose does it serve? If I'm
 	// keeping it, I should not return an unexported type.
 	return end.Attributes.transferType()
 }
 
-func (address endpointAddress) direction() endpointDirection {
+func (address endpointAddress) direction() EndpointDirection {
 	// Bit 7 of the endpointAddress determines the direction
 	const directionMask = 0x80
 	const directionBit = 7
-	return endpointDirection(address&directionMask) >> directionBit
+	return EndpointDirection(address&directionMask) >> directionBit
 }
 
 func (address endpointAddress) endpointNumber() byte {
@@ -66,8 +66,8 @@ func (address endpointAddress) endpointNumber() byte {
 	return byte(address & endpointNumberMask)
 }
 
-func (attributes endpointAttributes) transferType() transferType {
+func (attributes endpointAttributes) transferType() TransferType {
 	// Bits 0..1 of the bmAttributes determines the transfer type
 	const transferTypeMask = 0x03
-	return transferType(attributes & transferTypeMask)
+	return TransferType(attributes & transferTypeMask)
 }

@@ -1,4 +1,4 @@
-// Copyright (c) 2015-2017 The libusb developers. All rights reserved.
+// Copyright (c) 2015-2020 The libusb developers. All rights reserved.
 // Project site: https://github.com/gotmc/libusb
 // Use of this source code is governed by a MIT-style license that
 // can be found in the LICENSE.txt file for the project.
@@ -10,6 +10,7 @@ import (
 	"encoding/binary"
 	"fmt"
 	"log"
+	"strings"
 	"time"
 
 	"github.com/gotmc/libusb"
@@ -18,13 +19,14 @@ import (
 const reservedField = 0x00
 
 const (
-	devDepMsgOut msgID = 1 // DEV_DEP_MSG_OUT
+	devDepMsgOut    msgID = 1 // DEV_DEP_MSG_OUT
+	reqDevDepMsgOut msgID = 2 // REQUEST_DEV_DEP_MSG_IN
 )
 
 type msgID uint8
 
 func showVersion() {
-	version := libusb.GetVersion()
+	version := libusb.Version()
 	fmt.Printf(
 		"Using libusb version %d.%d.%d (%d)\n",
 		version.Major,
@@ -42,16 +44,16 @@ func main() {
 	}
 	defer ctx.Close()
 	start := time.Now()
-	devices, _ := ctx.GetDeviceList()
+	devices, _ := ctx.DeviceList()
 	fmt.Printf("Found %v USB devices (%.4fs elapsed).\n",
 		len(devices),
 		time.Since(start).Seconds(),
 	)
 	for _, usbDevice := range devices {
-		deviceAddress, _ := usbDevice.GetDeviceAddress()
-		deviceSpeed, _ := usbDevice.GetDeviceSpeed()
-		busNumber, _ := usbDevice.GetBusNumber()
-		usbDeviceDescriptor, _ := usbDevice.GetDeviceDescriptor()
+		deviceAddress, _ := usbDevice.DeviceAddress()
+		deviceSpeed, _ := usbDevice.Speed()
+		busNumber, _ := usbDevice.BusNumber()
+		usbDeviceDescriptor, _ := usbDevice.DeviceDescriptor()
 		fmt.Printf("Device address %v is on bus number %v\n=> %v\n",
 			deviceAddress,
 			busNumber,
@@ -68,36 +70,34 @@ func main() {
 			usbDeviceDescriptor.SerialNumberIndex,
 		)
 	}
-	showInfo(ctx, "Agilent 33220A", 2391, 1031)
-	// showInfo(ctx, "Nike SportWatch", 4524, 21588)
-	// showInfo(ctx, "Nike FuelBand", 4524, 25957)
+	showInfo(ctx, "Agilent U2751A", 2391, 15896)
 
 }
 
 func showInfo(ctx *libusb.Context, name string, vendorID, productID uint16) {
-	fmt.Printf("Let's open the %s using the Vendor and Product IDs\n", name)
+	fmt.Printf("Let's open the %s using vendor ID %d and product ID %d\n", name, vendorID, productID)
 	usbDevice, usbDeviceHandle, err := ctx.OpenDeviceWithVendorProduct(vendorID, productID)
-	usbDeviceDescriptor, _ := usbDevice.GetDeviceDescriptor()
 	if err != nil {
 		fmt.Printf("=> Failed opening the %s: %v\n", name, err)
 		return
 	}
+	usbDeviceDescriptor, err := usbDevice.DeviceDescriptor()
+	if err != nil {
+		fmt.Printf("=> Failed getting the device descriptor for %s: %v\n", name, err)
+		return
+	}
 	defer usbDeviceHandle.Close()
-	serialnum, _ := usbDeviceHandle.GetStringDescriptorASCII(
+	serialnum, _ := usbDeviceHandle.StringDescriptorASCII(
 		usbDeviceDescriptor.SerialNumberIndex,
 	)
-	manufacturer, _ := usbDeviceHandle.GetStringDescriptorASCII(
+	manufacturer, _ := usbDeviceHandle.StringDescriptorASCII(
 		usbDeviceDescriptor.ManufacturerIndex)
-	product, _ := usbDeviceHandle.GetStringDescriptorASCII(
+	product, _ := usbDeviceHandle.StringDescriptorASCII(
 		usbDeviceDescriptor.ProductIndex)
-	fmt.Printf("Found %v %v S/N %s using Vendor ID %v and Product ID %v\n",
-		manufacturer,
-		product,
-		serialnum,
-		vendorID,
-		productID,
-	)
-	configDescriptor, err := usbDevice.GetActiveConfigDescriptor()
+	fmt.Printf("Manufacturer = %s\n", strings.TrimSpace(manufacturer))
+	fmt.Printf("Product = %s\n", strings.TrimSpace(product))
+	fmt.Printf("S/N = %s\n", strings.TrimSpace(serialnum))
+	configDescriptor, err := usbDevice.ActiveConfigDescriptor()
 	if err != nil {
 		log.Fatalf("Failed getting the active config: %v", err)
 	}
@@ -133,23 +133,36 @@ func showInfo(ctx *libusb.Context, name string, vendorID, productID uint16) {
 		fmt.Printf("     => Max packet size: %d\n", endpoint.MaxPacketSize)
 	}
 
-	err = usbDeviceHandle.ClaimInterface(0)
+	// Initiate clear
+	p1 := make([]byte, 1)
+	_, err = usbDeviceHandle.ControlTransfer(0xC0, 0x0C, 0x0000, 0x047E, p1, 0x0001, 2000)
 	if err != nil {
-		log.Printf("Error claiming interface %s", err)
+		log.Printf("Error sending first control transfer: %s", err)
 	}
-	// Send USBTMC message to Agilent 33220A
-	bulkOutput := firstDescriptor.EndpointDescriptors[0]
-	address := bulkOutput.EndpointAddress
-	fmt.Printf("Set frequency/amplitude on endpoint address %d\n", address)
-	data := createGotmcMessage("apply:sinusoid 2340, 0.1, 0.0")
-	transferred, err := usbDeviceHandle.BulkTransfer(address, data, len(data), 5000)
+	p2 := make([]byte, 6)
+	_, err = usbDeviceHandle.ControlTransfer(0xC0, 0x0C, 0x0000, 0x047D, p2, 0x0006, 2000)
 	if err != nil {
-		log.Printf("Error on bulk transfer %s", err)
+		log.Printf("Error sending second control transfer: %s", err)
 	}
-	fmt.Printf("Sent %d bytes to 33220A\n", transferred)
-	err = usbDeviceHandle.ReleaseInterface(0)
+	p3 := make([]byte, 5)
+	_, err = usbDeviceHandle.ControlTransfer(0xC0, 0x0C, 0x0000, 0x0484, p3, 0x0005, 2000)
 	if err != nil {
-		log.Printf("Error releasing interface %s", err)
+		log.Printf("Error sending third control transfer: %s", err)
+	}
+	p4 := make([]byte, 0x000C)
+	_, err = usbDeviceHandle.ControlTransfer(0xC0, 0x0C, 0x0000, 0x0472, p4, 0x000C, 2000)
+	if err != nil {
+		log.Printf("Error sending fourth control transfer: %s", err)
+	}
+	p5 := make([]byte, 0x0001)
+	_, err = usbDeviceHandle.ControlTransfer(0xC0, 0x0C, 0x0000, 0x047A, p5, 0x0001, 2000)
+	if err != nil {
+		log.Printf("Error sending fifth control transfer: %s", err)
+	}
+	p6 := []byte{0x00, 0x00, 0x01, 0x01, 0x00, 0x00, 0x08, 0x01}
+	_, err = usbDeviceHandle.ControlTransfer(0x40, 0x0C, 0x0000, 0x0475, p6, len(p6), 2000)
+	if err != nil {
+		log.Printf("Error sending sixth control transfer: %s", err)
 	}
 }
 

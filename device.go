@@ -22,8 +22,8 @@ type Device struct {
 	ActiveConfiguration *ConfigDescriptor
 }
 
-// DeviceDescriptor represents a USB device descriptor as a Go struct.
-type DeviceDescriptor struct {
+// Descriptor represents a USB device descriptor as a Go struct.
+type Descriptor struct {
 	Length              uint8
 	DescriptorType      descriptorType
 	USBSpecification    bcd
@@ -40,9 +40,9 @@ type DeviceDescriptor struct {
 	NumConfigurations   uint8
 }
 
-// GetBusNumber gets "the number of the bus that a device is connected to."
+// BusNumber gets "the number of the bus that a device is connected to."
 // (Source: libusb docs)
-func (dev *Device) GetBusNumber() (int, error) {
+func (dev *Device) BusNumber() (int, error) {
 	busNumber, err := C.libusb_get_bus_number(dev.libusbDevice)
 	if err != nil {
 		return 0, err
@@ -50,7 +50,7 @@ func (dev *Device) GetBusNumber() (int, error) {
 	return int(busNumber), nil
 }
 
-// GetPortNumber gets "the number of the port that a device is connected to.
+// PortNumber gets "the number of the port that a device is connected to.
 // Unless the OS does something funky, or you are hot-plugging USB extension
 // cards, the port number returned by this call is usually guaranteed to be
 // uniquely tied to a physical port, meaning that different devices plugged on
@@ -58,7 +58,7 @@ func (dev *Device) GetBusNumber() (int, error) {
 // this, there is no guarantee that the port number returned by this call will
 // remain the same, or even match the order in which ports have been numbered
 // by the HUB/HCD manufacturer." (Source: libusb docs)
-func (dev *Device) GetPortNumber() (int, error) {
+func (dev *Device) PortNumber() (int, error) {
 	portNumber, err := C.libusb_get_port_number(dev.libusbDevice)
 	if err != nil {
 		return 0, fmt.Errorf("Port number is unavailable for device %v", dev)
@@ -66,14 +66,14 @@ func (dev *Device) GetPortNumber() (int, error) {
 	return int(portNumber), nil
 }
 
-// GetMaxPacketSize is a "convenience function to retrieve the wMaxPacketSize
+// MaxPacketSize is a "convenience function to retrieve the wMaxPacketSize
 // value for a particular endpoint in the active device configuration. This
 // function was originally intended to be of assistance when setting up
 // isochronous transfers, but a design mistake resulted in this function
 // instead. It simply returns the wMaxPacketSize value without considering its
 // contents. If you're dealing with isochronous transfers, you probably want
 // libusb_get_max_iso_packet_size() instead." (Source: libusb docs)
-func (dev *Device) GetMaxPacketSize(ep endpointAddress) (int, error) {
+func (dev *Device) MaxPacketSize(ep endpointAddress) (int, error) {
 	maxPacketSize, err := C.libusb_get_max_packet_size(dev.libusbDevice, C.uchar(ep))
 	if err != nil {
 		return 0, fmt.Errorf("wMaxPacketSize is unavailable for device %v", dev)
@@ -81,9 +81,9 @@ func (dev *Device) GetMaxPacketSize(ep endpointAddress) (int, error) {
 	return int(maxPacketSize), nil
 }
 
-// GetDeviceAddress gets "the address of the device on the bus it is connected
+// DeviceAddress gets "the address of the device on the bus it is connected
 // to." (Source: libusb docs)
-func (dev *Device) GetDeviceAddress() (int, error) {
+func (dev *Device) DeviceAddress() (int, error) {
 	deviceAddress, err := C.libusb_get_device_address(dev.libusbDevice)
 	if err != nil {
 		return 0, err
@@ -91,14 +91,14 @@ func (dev *Device) GetDeviceAddress() (int, error) {
 	return int(deviceAddress), nil
 }
 
-// GetDeviceSpeed gets "the negotiated connection speed for a device." (Source:
+// Speed gets "the negotiated connection speed for a device." (Source:
 // libusb docs)
-func (dev *Device) GetDeviceSpeed() (speed, error) {
+func (dev *Device) Speed() (SpeedType, error) {
 	deviceSpeed, err := C.libusb_get_device_speed(dev.libusbDevice)
 	if err != nil {
 		return 0, err
 	}
-	return speed(deviceSpeed), nil
+	return SpeedType(deviceSpeed), nil
 }
 
 // Open will "open a device and obtain a device handle. A handle allows you to
@@ -119,20 +119,19 @@ func (dev *Device) Open() (*DeviceHandle, error) {
 	return deviceHandle, nil
 }
 
-// GetDeviceDescriptor implements the libusb_get_device_descriptor function to
-// update the DeviceDescriptor struct embedded in the Device.
-
-// GetDeviceDescriptor gets "the USB device descriptor for a given device. This
-// is a non-blocking function; the device descriptor is cached in memory. Note
-// since libusb-1.0.16, LIBUSB_API_VERSION >= 0x01000102, this function always
+// DeviceDescriptor implements the libusb_get_device_descriptor function to
+// update the DeviceDescriptor struct embedded in the Device.  DeviceDescriptor
+// gets "the USB device descriptor for a given device. This is a non-blocking
+// function; the device descriptor is cached in memory. Note since
+// libusb-1.0.16, LIBUSB_API_VERSION >= 0x01000102, this function always
 // succeeds." (Source: libusb docs)
-func (dev *Device) GetDeviceDescriptor() (*DeviceDescriptor, error) {
+func (dev *Device) DeviceDescriptor() (*Descriptor, error) {
 	var desc C.struct_libusb_device_descriptor
 	err := C.libusb_get_device_descriptor(dev.libusbDevice, &desc)
 	if err != 0 {
 		return nil, ErrorCode(err)
 	}
-	deviceDescriptor := DeviceDescriptor{
+	deviceDescriptor := Descriptor{
 		Length:              uint8(desc.bLength),
 		DescriptorType:      descriptorType(desc.bDescriptorType),
 		USBSpecification:    bcd(desc.bcdUSB),
@@ -151,10 +150,10 @@ func (dev *Device) GetDeviceDescriptor() (*DeviceDescriptor, error) {
 	return &deviceDescriptor, nil
 }
 
-// GetActiveConfigDescriptor "gets the USB configuration descriptor for the
+// ActiveConfigDescriptor "gets the USB configuration descriptor for the
 // currently active configuration. This is a non-blocking function which does
 // not involve any requests being sent to the device." (Source: libusb docs)
-func (dev *Device) GetActiveConfigDescriptor() (*ConfigDescriptor, error) {
+func (dev *Device) ActiveConfigDescriptor() (*ConfigDescriptor, error) {
 	var config *C.struct_libusb_config_descriptor
 	err := C.libusb_get_active_config_descriptor(dev.libusbDevice, &config)
 	defer C.libusb_free_config_descriptor(config)
@@ -247,10 +246,10 @@ func (dev *Device) GetActiveConfigDescriptor() (*ConfigDescriptor, error) {
 	return activeConfiguration, nil
 }
 
-// GetConfigDescriptor "gets a USB configuration descriptor based on its index.
+// ConfigDescriptor "gets a USB configuration descriptor based on its index.
 // This is a non-blocking function which does not involve any requests being
 // sent to the device." (Source: libusb docs)
-func (dev *Device) GetConfigDescriptor(configIndex int) (*ConfigDescriptor, error) {
+func (dev *Device) ConfigDescriptor(configIndex int) (*ConfigDescriptor, error) {
 	var cConfig *C.struct_libusb_config_descriptor
 	err := C.libusb_get_config_descriptor(dev.libusbDevice, C.uint8_t(configIndex), &cConfig)
 	defer C.libusb_free_config_descriptor(cConfig)
@@ -271,10 +270,10 @@ func (dev *Device) GetConfigDescriptor(configIndex int) (*ConfigDescriptor, erro
 	return configuration, nil
 }
 
-// GetConfigDescriptorByValue gets "a USB configuration descriptor with a
+// ConfigDescriptorByValue gets "a USB configuration descriptor with a
 // specific bConfigurationValue. This is a non-blocking function which does not
 // involve any requests being sent to the device. (Source: libusb docs)
-func (dev *Device) GetConfigDescriptorByValue(configValue int) (*ConfigDescriptor, error) {
+func (dev *Device) ConfigDescriptorByValue(configValue int) (*ConfigDescriptor, error) {
 	var cConfig *C.struct_libusb_config_descriptor
 	err := C.libusb_get_config_descriptor_by_value(
 		dev.libusbDevice, C.uint8_t(configValue), &cConfig,

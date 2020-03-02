@@ -17,8 +17,8 @@ type DeviceHandle struct {
 	libusbDeviceHandle *C.libusb_device_handle
 }
 
-// GetStringDescriptor retrieves a descriptor from a device.
-func (dh *DeviceHandle) GetStringDescriptor(
+// StringDescriptor retrieves a descriptor from a device.
+func (dh *DeviceHandle) StringDescriptor(
 	descIndex uint8,
 	langID uint16,
 ) (string, error) {
@@ -38,10 +38,10 @@ func (dh *DeviceHandle) GetStringDescriptor(
 	return C.GoString(data), nil
 }
 
-// GetStringDescriptorASCII retrieve(s) a string descriptor in C style ASCII.
+// StringDescriptorASCII retrieve(s) a string descriptor in C style ASCII.
 // Wrapper around libusb_get_string_descriptor(). Uses the first language
 // supported by the device. (Source: libusb docs)
-func (dh *DeviceHandle) GetStringDescriptorASCII(
+func (dh *DeviceHandle) StringDescriptorASCII(
 	descIndex uint8,
 ) (string, error) {
 	// TODO(mdr): Should the length be a constant? Why did I pick 256 bytes?
@@ -66,15 +66,15 @@ func (dh *DeviceHandle) Close() error {
 	return nil
 }
 
-// GetDevice implements libusb_get_device to get the underlying device for a
+// Device implements libusb_get_device to get the underlying device for a
 // handle.
 // TODO(mdr): Determine if I actually need this function.
-// func (dh *DeviceHandle) GetDevice() (*Device, error) {
+// func (dh *DeviceHandle) Device() (*Device, error) {
 // }
 
-// GetConfiguration implements the libusb_get_configuration function to
+// Configuration implements the libusb_get_configuration function to
 // determine the bConfigurationValue of the currently active configuration.
-func (dh *DeviceHandle) GetConfiguration() (int, error) {
+func (dh *DeviceHandle) Configuration() (int, error) {
 	var configuration *C.int
 	err := C.libusb_get_configuration(dh.libusbDeviceHandle, configuration)
 	if err != 0 {

@@ -9,8 +9,8 @@ package libusb
 // #include <libusb.h>
 import "C"
 
-// The Version struct represents the libusb version.
-type Version struct {
+// The VersionType struct represents the libusb version.
+type VersionType struct {
 	Major            uint16
 	Minor            uint16
 	Micro            uint16
@@ -19,11 +19,11 @@ type Version struct {
 	Describe         string
 }
 
-// GetVersion gets the libusb version and returns a Version struct.
-func GetVersion() Version {
+// Version gets the libusb version and returns a Version struct.
+func Version() VersionType {
 	var cVersion C.struct_libusb_version
 	cVersion = *C.libusb_get_version()
-	version := Version{
+	version := VersionType{
 		Major:            uint16(cVersion.major),
 		Minor:            uint16(cVersion.minor),
 		Micro:            uint16(cVersion.micro),

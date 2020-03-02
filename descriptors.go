@@ -114,46 +114,48 @@ func (descriptorType descriptorType) String() string {
 	return descriptorTypes[descriptorType]
 }
 
-type endpointDirection byte
+// EndpointDirection provides the type for an in or out endpoint.
+type EndpointDirection byte
 
 const (
 	// Per USB 2.0 spec bit 7 of the endpoint address defines the direction,
 	// where 0 = OUT and 1 = IN. The libusb C.LIBUSB_ENDPOINT_IN enumeration is
 	// 128 instead of 1. Therefore, I'm not using C.LIBUSB_ENDPOINT_IN (128).
-	endpointOut   endpointDirection = C.LIBUSB_ENDPOINT_OUT
-	endpointIn    endpointDirection = C.LIBUSB_ENDPOINT_IN
+	endpointOut   EndpointDirection = C.LIBUSB_ENDPOINT_OUT
+	endpointIn    EndpointDirection = 1
 	directionMask endpointAddress   = 0x80
 	directionBit                    = 7
 )
 
-var endpointDirections = map[endpointDirection]string{
+var endpointDirections = map[EndpointDirection]string{
 	endpointOut: "Out: host-to-device.",
 	endpointIn:  "In: device-to-host.",
 }
 
 // String implements the Stringer interface for endpointDirection.
-func (endpointDirection endpointDirection) String() string {
+func (endpointDirection EndpointDirection) String() string {
 	return endpointDirections[endpointDirection]
 }
 
-type transferType int
+// TransferType provides which type of transfer.
+type TransferType int
 
 // Endpoint transfer type http://bit.ly/enum_libusb_transfer_type
 const (
-	ControlTransfer     transferType = C.LIBUSB_TRANSFER_TYPE_CONTROL
-	IsochronousTransfer transferType = C.LIBUSB_TRANSFER_TYPE_ISOCHRONOUS
-	BulkTransfer        transferType = C.LIBUSB_TRANSFER_TYPE_BULK
-	InterruptTransfer   transferType = C.LIBUSB_TRANSFER_TYPE_INTERRUPT
+	ControlTransfer     TransferType = C.LIBUSB_TRANSFER_TYPE_CONTROL
+	IsochronousTransfer TransferType = C.LIBUSB_TRANSFER_TYPE_ISOCHRONOUS
+	BulkTransfer        TransferType = C.LIBUSB_TRANSFER_TYPE_BULK
+	InterruptTransfer   TransferType = C.LIBUSB_TRANSFER_TYPE_INTERRUPT
 )
 
-var transferTypes = map[transferType]string{
+var transferTypes = map[TransferType]string{
 	ControlTransfer:     "Control endpoint.",
 	IsochronousTransfer: "Isochronous endpoint.",
 	BulkTransfer:        "Bulk endpoint.",
 	InterruptTransfer:   "Interrupt endpoint.",
 }
 
-func (transferType transferType) String() string {
+func (transferType TransferType) String() string {
 	return transferTypes[transferType]
 }
 

@@ -71,11 +71,11 @@ func (r requestRecipient) String() string {
 	return requestRecipients[r]
 }
 
-// BitmapRequestType returns the Request type.  Bits 0:4 determine recipient,
+// bitmapRequestType returns the Request type.  Bits 0:4 determine recipient,
 // see libusb_request_recipient. Bits 5:6 determine type, see
 // libusb_request_type. Bit 7 determines data transfer direction, see
 // libusb_endpoint_direction.
-func BitmapRequestType(
+func bitmapRequestType(
 	reqDirection transferDirection,
 	reqType requestType,
 	reqRecipient requestRecipient,

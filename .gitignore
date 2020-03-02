@@ -30,3 +30,6 @@ coverage.out
 
 # Ignore executables
 example/get_sn/get_sn
+example/get_sn_lite/get_sn_lite
+example/key33220/key33220
+example/keyu2751a/keyu2751a
