@@ -134,35 +134,34 @@ func showInfo(ctx *libusb.Context, name string, vendorID, productID uint16) {
 	}
 
 	// Initiate clear
-	p1 := make([]byte, 1)
-	_, err = usbDeviceHandle.ControlTransfer(0xC0, 0x0C, 0x0000, 0x047E, p1, 0x0001, 2000)
-	if err != nil {
-		log.Printf("Error sending first control transfer: %s", err)
+	packets := []struct {
+		bmRequestType byte
+		bRequest      byte
+		value         uint16
+		index         uint16
+		data          []byte
+		length        int
+	}{
+		{0xC0, 0x0C, 0x0000, 0x047E, make([]byte, 0x01), 0x01},
+		{0xC0, 0x0C, 0x0000, 0x047D, make([]byte, 0x06), 0x06},
+		{0xC0, 0x0C, 0x0000, 0x0484, make([]byte, 0x05), 0x05},
+		{0xC0, 0x0C, 0x0000, 0x0472, make([]byte, 0x0C), 0x0C},
+		{0xC0, 0x0C, 0x0000, 0x047A, make([]byte, 0x01), 0x01},
+		{0x40, 0x0C, 0x0000, 0x0475, []byte{0x00, 0x00, 0x01, 0x01, 0x00, 0x00, 0x08, 0x01}, 0x08},
 	}
-	p2 := make([]byte, 6)
-	_, err = usbDeviceHandle.ControlTransfer(0xC0, 0x0C, 0x0000, 0x047D, p2, 0x0006, 2000)
-	if err != nil {
-		log.Printf("Error sending second control transfer: %s", err)
-	}
-	p3 := make([]byte, 5)
-	_, err = usbDeviceHandle.ControlTransfer(0xC0, 0x0C, 0x0000, 0x0484, p3, 0x0005, 2000)
-	if err != nil {
-		log.Printf("Error sending third control transfer: %s", err)
-	}
-	p4 := make([]byte, 0x000C)
-	_, err = usbDeviceHandle.ControlTransfer(0xC0, 0x0C, 0x0000, 0x0472, p4, 0x000C, 2000)
-	if err != nil {
-		log.Printf("Error sending fourth control transfer: %s", err)
-	}
-	p5 := make([]byte, 0x0001)
-	_, err = usbDeviceHandle.ControlTransfer(0xC0, 0x0C, 0x0000, 0x047A, p5, 0x0001, 2000)
-	if err != nil {
-		log.Printf("Error sending fifth control transfer: %s", err)
-	}
-	p6 := []byte{0x00, 0x00, 0x01, 0x01, 0x00, 0x00, 0x08, 0x01}
-	_, err = usbDeviceHandle.ControlTransfer(0x40, 0x0C, 0x0000, 0x0475, p6, len(p6), 2000)
-	if err != nil {
-		log.Printf("Error sending sixth control transfer: %s", err)
+	for i, packet := range packets {
+		_, err = usbDeviceHandle.ControlTransfer(
+			packet.bmRequestType,
+			packet.bRequest,
+			packet.value,
+			packet.index,
+			packet.data,
+			packet.length,
+			2000,
+		)
+		if err != nil {
+			log.Printf("Error sending control transfer #%d: %s", i+1, err)
+		}
 	}
 }
 
