@@ -24,7 +24,7 @@ const (
 type msgID uint8
 
 func showVersion() {
-	version := libusb.GetVersion()
+	version := libusb.Version()
 	fmt.Printf(
 		"Using libusb version %d.%d.%d (%d)\n",
 		version.Major,
@@ -42,16 +42,16 @@ func main() {
 	}
 	defer ctx.Close()
 	start := time.Now()
-	devices, _ := ctx.GetDeviceList()
+	devices, _ := ctx.DeviceList()
 	fmt.Printf("Found %v USB devices (%.4fs elapsed).\n",
 		len(devices),
 		time.Since(start).Seconds(),
 	)
 	for _, usbDevice := range devices {
-		deviceAddress, _ := usbDevice.GetDeviceAddress()
-		deviceSpeed, _ := usbDevice.GetDeviceSpeed()
-		busNumber, _ := usbDevice.GetBusNumber()
-		usbDeviceDescriptor, _ := usbDevice.GetDeviceDescriptor()
+		deviceAddress, _ := usbDevice.DeviceAddress()
+		deviceSpeed, _ := usbDevice.Speed()
+		busNumber, _ := usbDevice.BusNumber()
+		usbDeviceDescriptor, _ := usbDevice.DeviceDescriptor()
 		fmt.Printf("Device address %v is on bus number %v\n=> %v\n",
 			deviceAddress,
 			busNumber,
@@ -68,7 +68,8 @@ func main() {
 			usbDeviceDescriptor.SerialNumberIndex,
 		)
 	}
-	showInfo(ctx, "Agilent 33220A", 2391, 1031)
+	showInfo(ctx, "Agilent U2751A", 2391, 15640)
+	// showInfo(ctx, "Agilent 33220A", 2391, 1031)
 	// showInfo(ctx, "Nike SportWatch", 4524, 21588)
 	// showInfo(ctx, "Nike FuelBand", 4524, 25957)
 
@@ -77,18 +78,18 @@ func main() {
 func showInfo(ctx *libusb.Context, name string, vendorID, productID uint16) {
 	fmt.Printf("Let's open the %s using the Vendor and Product IDs\n", name)
 	usbDevice, usbDeviceHandle, err := ctx.OpenDeviceWithVendorProduct(vendorID, productID)
-	usbDeviceDescriptor, _ := usbDevice.GetDeviceDescriptor()
+	usbDeviceDescriptor, _ := usbDevice.DeviceDescriptor()
 	if err != nil {
 		fmt.Printf("=> Failed opening the %s: %v\n", name, err)
 		return
 	}
 	defer usbDeviceHandle.Close()
-	serialnum, _ := usbDeviceHandle.GetStringDescriptorASCII(
+	serialnum, _ := usbDeviceHandle.StringDescriptorASCII(
 		usbDeviceDescriptor.SerialNumberIndex,
 	)
-	manufacturer, _ := usbDeviceHandle.GetStringDescriptorASCII(
+	manufacturer, _ := usbDeviceHandle.StringDescriptorASCII(
 		usbDeviceDescriptor.ManufacturerIndex)
-	product, _ := usbDeviceHandle.GetStringDescriptorASCII(
+	product, _ := usbDeviceHandle.StringDescriptorASCII(
 		usbDeviceDescriptor.ProductIndex)
 	fmt.Printf("Found %v %v S/N %s using Vendor ID %v and Product ID %v\n",
 		manufacturer,
@@ -97,7 +98,7 @@ func showInfo(ctx *libusb.Context, name string, vendorID, productID uint16) {
 		vendorID,
 		productID,
 	)
-	configDescriptor, err := usbDevice.GetActiveConfigDescriptor()
+	configDescriptor, err := usbDevice.ActiveConfigDescriptor()
 	if err != nil {
 		log.Fatalf("Failed getting the active config: %v", err)
 	}
@@ -137,6 +138,20 @@ func showInfo(ctx *libusb.Context, name string, vendorID, productID uint16) {
 	if err != nil {
 		log.Printf("Error claiming interface %s", err)
 	}
+
+	// Get Capabilities
+	p := make([]byte, 64)
+	idx := uint16(0x0000)
+	n, err := usbDeviceHandle.ControlTransfer(0xA1, 7, 0x0000, idx, p, 0x18, 2000)
+	if err != nil {
+		log.Printf("Error sending control transfer: %s", err)
+	}
+	log.Printf("Sent %d bytes on control transfer", n)
+	log.Printf("capabilities = %q", p)
+	log.Printf("capabilities = %v", p)
+	log.Printf("cap[14] := %b (%d)", p[14], p[14])
+	log.Printf("cap[15] := %b (%d)", p[15], p[15])
+
 	// Send USBTMC message to Agilent 33220A
 	bulkOutput := firstDescriptor.EndpointDescriptors[0]
 	address := bulkOutput.EndpointAddress

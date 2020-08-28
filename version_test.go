@@ -7,12 +7,12 @@ package libusb
 
 import "testing"
 
-func TestGetVersion(t *testing.T) {
+func TestVersion(t *testing.T) {
 	const major = 1
 	const minor = 0
 	const minMicro = 17
 	releaseCandidate := ""
-	version := GetVersion()
+	version := Version()
 	if version.Major != major {
 		t.Errorf(
 			"Major version == %d, want %d",

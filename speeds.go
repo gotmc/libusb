@@ -9,17 +9,18 @@ package libusb
 // #include <libusb.h>
 import "C"
 
-type speed int
+// SpeedType provides the USB speed type.
+type SpeedType int
 
 const (
-	speedUnknown speed = C.LIBUSB_SPEED_UNKNOWN
-	speedLow     speed = C.LIBUSB_SPEED_LOW
-	speedFull    speed = C.LIBUSB_SPEED_FULL
-	speedHigh    speed = C.LIBUSB_SPEED_HIGH
-	speedSuper   speed = C.LIBUSB_SPEED_SUPER
+	speedUnknown SpeedType = C.LIBUSB_SPEED_UNKNOWN
+	speedLow     SpeedType = C.LIBUSB_SPEED_LOW
+	speedFull    SpeedType = C.LIBUSB_SPEED_FULL
+	speedHigh    SpeedType = C.LIBUSB_SPEED_HIGH
+	speedSuper   SpeedType = C.LIBUSB_SPEED_SUPER
 )
 
-var speedCodes = map[speed]string{
+var speedCodes = map[SpeedType]string{
 	speedUnknown: "The OS doesn't report or know the device speed.",
 	speedLow:     "The device is operating at low speed (1.5MBit/s)",
 	speedFull:    "The device is operating at full speed (12MBit/s)",
@@ -27,7 +28,7 @@ var speedCodes = map[speed]string{
 	speedSuper:   "The device is operating at super speed (5000MBit/s)",
 }
 
-func (speed speed) String() string {
+func (speed SpeedType) String() string {
 	return speedCodes[speed]
 }
 

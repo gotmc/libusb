@@ -114,7 +114,7 @@ func TestDescriptortypeStringMethod(t *testing.T) {
 
 func TestEndpointDirectionStringMethod(t *testing.T) {
 	testCases := []struct {
-		end      endpointDirection
+		end      EndpointDirection
 		expected string
 	}{
 		{endpointOut, "Out: host-to-device."},
@@ -136,7 +136,7 @@ func TestEndpointDirectionStringMethod(t *testing.T) {
 
 func TestTransferTypeStringMethod(t *testing.T) {
 	testCases := []struct {
-		transfer transferType
+		transfer TransferType
 		expected string
 	}{
 		{ControlTransfer, "Control endpoint."},

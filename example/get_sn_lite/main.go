@@ -14,12 +14,12 @@ import (
 func main() {
 	ctx, _ := libusb.NewContext()
 	defer ctx.Close()
-	devices, _ := ctx.GetDeviceList()
+	devices, _ := ctx.DeviceList()
 	for _, device := range devices {
-		usbDeviceDescriptor, _ := device.GetDeviceDescriptor()
+		usbDeviceDescriptor, _ := device.DeviceDescriptor()
 		handle, _ := device.Open()
 		defer handle.Close()
-		serialNumber, _ := handle.GetStringDescriptorASCII(usbDeviceDescriptor.SerialNumberIndex)
+		serialNumber, _ := handle.StringDescriptorASCII(usbDeviceDescriptor.SerialNumberIndex)
 		log.Printf("Found S/N: %s", serialNumber)
 	}
 

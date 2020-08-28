@@ -72,13 +72,13 @@ func TestLogLevelStringMethod(t *testing.T) {
 	}
 }
 
-func TestGetDeviceList(t *testing.T) {
+func TestDeviceList(t *testing.T) {
 	context, _ := NewContext()
 	defer context.Close()
-	devices, err := context.GetDeviceList()
+	devices, err := context.DeviceList()
 	if err != nil {
 		t.Errorf(
-			"Error on GetDeviceList:\n\tgot %v; want %v",
+			"Error on DeviceList:\n\tgot %v; want %v",
 			err,
 			nil,
 		)

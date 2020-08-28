@@ -68,7 +68,7 @@ func (dh *DeviceHandle) BulkTransferIn(
 // ControlTransfer sends a transfer using a control endpoint for the given
 // device handle.
 func (dh *DeviceHandle) ControlTransfer(
-	requestType bmRequestType,
+	requestType byte,
 	request byte,
 	value uint16,
 	index uint16,

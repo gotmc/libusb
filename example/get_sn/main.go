@@ -17,13 +17,13 @@ func main() {
 		log.Fatal("Couldn't create USB context. Ending now.")
 	}
 	defer ctx.Close()
-	devices, err := ctx.GetDeviceList()
+	devices, err := ctx.DeviceList()
 	if err != nil {
 		log.Fatalf("Couldn't get devices")
 	}
 	log.Printf("Found %v USB devices.\n", len(devices))
 	for _, device := range devices {
-		usbDeviceDescriptor, err := device.GetDeviceDescriptor()
+		usbDeviceDescriptor, err := device.DeviceDescriptor()
 		if err != nil {
 			log.Printf("Error getting device descriptor: %s", err)
 			continue
@@ -34,15 +34,15 @@ func main() {
 			continue
 		}
 		defer handle.Close()
-		serialNumber, err := handle.GetStringDescriptorASCII(usbDeviceDescriptor.SerialNumberIndex)
+		serialNumber, err := handle.StringDescriptorASCII(usbDeviceDescriptor.SerialNumberIndex)
 		if err != nil {
 			serialNumber = "N/A"
 		}
-		manufacturer, err := handle.GetStringDescriptorASCII(usbDeviceDescriptor.ManufacturerIndex)
+		manufacturer, err := handle.StringDescriptorASCII(usbDeviceDescriptor.ManufacturerIndex)
 		if err != nil {
 			manufacturer = "N/A"
 		}
-		product, err := handle.GetStringDescriptorASCII(usbDeviceDescriptor.ProductIndex)
+		product, err := handle.StringDescriptorASCII(usbDeviceDescriptor.ProductIndex)
 		if err != nil {
 			product = "N/A"
 		}
