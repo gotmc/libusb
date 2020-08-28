@@ -13,7 +13,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/gotmc/libusb"
+	libusb "github.com/gotmc/libusb/v2"
 )
 
 const reservedField = 0x00
