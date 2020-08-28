@@ -9,8 +9,6 @@ package libusb
 // #include <libusb.h>
 import "C"
 
-type bmRequestType byte
-
 type transferDirection byte
 
 // Constants to set the transfer direction.
@@ -75,11 +73,6 @@ func (r requestRecipient) String() string {
 // see libusb_request_recipient. Bits 5:6 determine type, see
 // libusb_request_type. Bit 7 determines data transfer direction, see
 // libusb_endpoint_direction.
-func bitmapRequestType(
-	reqDirection transferDirection,
-	reqType requestType,
-	reqRecipient requestRecipient,
-) bmRequestType {
-	return bmRequestType(
-		byte(reqDirection) | byte(reqType) | byte(reqRecipient))
+func bitmapRequestType(dir transferDirection, reqType requestType, recipient requestRecipient) byte {
+	return byte(dir) | byte(reqType) | byte(recipient)
 }
