@@ -31,7 +31,7 @@ func ErrorName(err ErrorCode) string {
 
 // StrError implements the libusb_strerror function.
 func StrError(err ErrorCode) string {
-	return C.GoString(C.libusb_strerror(int32(err)))
+	return C.GoString(C.libusb_strerror(C.int(err)))
 }
 
 // SetLocale sets the locale for libusb errors.
