@@ -160,7 +160,8 @@ func (storage *HotplugCallbackStorage) handleEvents(libCtx *C.libusb_context) {
 			return
 		default:
 		}
-		if errno := C.libusb_handle_events_timeout_completed(libCtx, &tv, nil); errno < 0 {
+		errno := C.libusb_handle_events_timeout_completed(libCtx, &tv, nil)
+		if errno != C.LIBUSB_SUCCESS && errno != C.LIBUSB_ERROR_INTERRUPTED {
 			log.Printf("handle_events error: %s", ErrorCode(errno))
 		}
 	}
