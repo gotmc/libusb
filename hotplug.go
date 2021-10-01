@@ -4,12 +4,35 @@ package libusb
 // #include <libusb.h>
 // int libusbHotplugCallback (libusb_context *ctx, libusb_device *device, libusb_hotplug_event event, void *user_data);
 // typedef struct libusb_device_descriptor libusb_device_descriptor_struct;
+// static int libusb_hotplug_register_callback_wrapper (
+//	libusb_context *ctx,
+//	int events, int flags,
+//	int vendor_id, int product_id, int dev_class,
+//	libusb_hotplug_callback_fn cb_fn, void *user_data,
+//	libusb_hotplug_callback_handle *callback_handle)
+//	{
+// 		return libusb_hotplug_register_callback(ctx, events, flags, vendor_id, product_id, dev_class, cb_fn, user_data, callback_handle);
+// }
 import "C"
 import (
 	"fmt"
 	"log"
 	"unsafe"
 )
+
+/*
+	rc := C.libusb_hotplug_register_callback(
+		ctx.libusbContext,
+		event,
+		C.LIBUSB_HOTPLUG_NO_FLAGS,
+		vID,
+		pID,
+		C.LIBUSB_HOTPLUG_MATCH_ANY,
+		C.libusb_hotplug_callback_fn(unsafe.Pointer(C.libusbHotplugCallback)),
+		nil,
+		&cbHandle,
+	)
+*/
 
 // HotPlugEventType ...
 type HotPlugEventType uint8
@@ -61,7 +84,7 @@ func (ctx *Context) HotplugRegisterCallbackEvent(vendorID, productID uint16, eve
 		ctx.newHotPlugHandler()
 	}
 
-	var event C.libusb_hotplug_event
+	var event C.int
 	switch eventType {
 	case HotplugArrived:
 		event = C.LIBUSB_HOTPLUG_EVENT_DEVICE_ARRIVED
@@ -83,7 +106,7 @@ func (ctx *Context) HotplugRegisterCallbackEvent(vendorID, productID uint16, eve
 
 	var cbHandle C.libusb_hotplug_callback_handle
 
-	rc := C.libusb_hotplug_register_callback(
+	rc := C.libusb_hotplug_register_callback_wrapper(
 		ctx.libusbContext,
 		event,
 		C.LIBUSB_HOTPLUG_NO_FLAGS,
