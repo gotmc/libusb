@@ -20,20 +20,6 @@ import (
 	"unsafe"
 )
 
-/*
-	rc := C.libusb_hotplug_register_callback(
-		ctx.libusbContext,
-		event,
-		C.LIBUSB_HOTPLUG_NO_FLAGS,
-		vID,
-		pID,
-		C.LIBUSB_HOTPLUG_MATCH_ANY,
-		C.libusb_hotplug_callback_fn(unsafe.Pointer(C.libusbHotplugCallback)),
-		nil,
-		&cbHandle,
-	)
-*/
-
 // HotPlugEventType ...
 type HotPlugEventType uint8
 
