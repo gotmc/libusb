@@ -162,14 +162,13 @@ func (ctx *Context) hotplugHandleEventsCompleteAll() {
 }
 
 func (storage *HotplugCallbackStorage) handleEvents(libCtx *C.libusb_context) {
-	tv := C.struct_timeval{tv_usec: 100000}
 	for {
 		select {
 		case <-storage.done:
 			return
 		default:
 		}
-		if errno := C.libusb_handle_events_timeout_completed(libCtx, &tv, nil); errno < 0 {
+		if errno := C.libusb_handle_events_completed(libCtx, nil); errno < 0 {
 			log.Printf("handle_events error: %s", ErrorCode(errno))
 		}
 	}
