@@ -7,6 +7,9 @@ package libusb
 
 // #cgo pkg-config: libusb-1.0
 // #include <libusb.h>
+// static inline const char* libusb_strerror_wrapper (int code) {
+// 	return libusb_strerror(code);
+// }
 import "C"
 import (
 	"fmt"
@@ -31,7 +34,7 @@ func ErrorName(err ErrorCode) string {
 
 // StrError implements the libusb_strerror function.
 func StrError(err ErrorCode) string {
-	return C.GoString(C.libusb_strerror(C.int(err)))
+	return C.GoString(C.libusb_strerror_wrapper(C.int(err)))
 }
 
 // SetLocale sets the locale for libusb errors.
