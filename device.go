@@ -233,6 +233,7 @@ func (dev *Device) ActiveConfigDescriptor() (*ConfigDescriptor, error) {
 					EndpointAddress: endpointAddress(libusbEndpointDescriptor.bEndpointAddress),
 					Attributes:      endpointAttributes(libusbEndpointDescriptor.bmAttributes),
 					MaxPacketSize:   uint16(libusbEndpointDescriptor.wMaxPacketSize),
+					Interval:        uint8(libusbEndpointDescriptor.bInterval),
 				}
 				endpointDescriptors = append(endpointDescriptors, &endpointDescriptor)
 			}
