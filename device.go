@@ -211,6 +211,7 @@ func (dev *Device) ActiveConfigDescriptor() (*ConfigDescriptor, error) {
 				NumEndpoints:        int(libusbInterfaceDescriptor.bNumEndpoints),
 				InterfaceClass:      uint8(libusbInterfaceDescriptor.bInterfaceClass),
 				InterfaceSubClass:   uint8(libusbInterfaceDescriptor.bInterfaceSubClass),
+				InterfaceProtocol:   uint8(libusbInterfaceDescriptor.bInterfaceProtocol),
 				InterfaceIndex:      int(libusbInterfaceDescriptor.iInterface),
 				EndpointDescriptors: nil,
 			}
