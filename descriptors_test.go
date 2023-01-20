@@ -6,7 +6,6 @@
 package libusb
 
 import (
-	"fmt"
 	"testing"
 )
 
@@ -31,7 +30,7 @@ func TestBcdType(t *testing.T) {
 		for _, testCase := range testCases {
 			b := bcd(testCase.bcdValue)
 			t.Logf("\tWhen getting the string for bcd %#04x", testCase.bcdValue)
-			computedString := fmt.Sprintf("%s", b)
+			computedString := b.String()
 			if computedString != testCase.bcdString {
 				t.Errorf("\t%v Should have computed %s but got %s", failCheck, testCase.bcdString, computedString)
 			} else {

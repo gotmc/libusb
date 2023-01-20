@@ -187,7 +187,7 @@ func (dh *DeviceHandle) AttachKernelDriver(interfaceNum int) error {
 // enable/disable libusb's automatic kernel driver detachment.
 func (dh *DeviceHandle) SetAutoDetachKernelDriver(enable bool) error {
 	cEnable := C.int(0)
-	if enable == true {
+	if enable {
 		cEnable = C.int(1)
 	}
 	err := C.libusb_set_auto_detach_kernel_driver(dh.libusbDeviceHandle, cEnable)

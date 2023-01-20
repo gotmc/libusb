@@ -53,10 +53,7 @@ func CPUtoLE16(value int) int {
 // capability. This call should be performed after libusb_init(), to ensure
 // the backend has updated its capability set." (Source: libusb docs)
 func HasCapability(capability int) bool {
-	if C.libusb_has_capability(C.uint32_t(capability)) != 0 {
-		return true
-	}
-	return false
+	return C.libusb_has_capability(C.uint32_t(capability)) != 0
 }
 
 const (
@@ -86,8 +83,7 @@ const (
 func bcdToDecimal(bcdValue uint16) float64 {
 	bcdPowersByPosition := []string{"hundreths", "tenths", "ones", "tens"}
 
-	var bcdMap map[string]uint16
-	bcdMap = make(map[string]uint16)
+	bcdMap := make(map[string]uint16)
 	for i, power := range bcdPowersByPosition {
 		bcdMap[power] = bcdValue & (0xf << uint(4*i)) / uint16(math.Pow(16, float64(i)))
 	}

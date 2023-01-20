@@ -21,8 +21,7 @@ type VersionType struct {
 
 // Version gets the libusb version and returns a Version struct.
 func Version() VersionType {
-	var cVersion C.struct_libusb_version
-	cVersion = *C.libusb_get_version()
+	cVersion := *C.libusb_get_version()
 	version := VersionType{
 		Major:            uint16(cVersion.major),
 		Minor:            uint16(cVersion.minor),

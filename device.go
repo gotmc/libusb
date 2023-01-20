@@ -61,7 +61,7 @@ func (dev *Device) BusNumber() (int, error) {
 func (dev *Device) PortNumber() (int, error) {
 	portNumber, err := C.libusb_get_port_number(dev.libusbDevice)
 	if err != nil {
-		return 0, fmt.Errorf("Port number is unavailable for device %v", dev)
+		return 0, fmt.Errorf("port number is unavailable for device %v", dev)
 	}
 	return int(portNumber), nil
 }

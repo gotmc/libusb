@@ -59,7 +59,7 @@ func NewContext() (*Context, error) {
 	errnum := C.libusb_init(&newContext.libusbContext)
 	if errnum != 0 {
 		return nil, fmt.Errorf(
-			"Failed to initialize new libusb context. Received error %d", errnum)
+			"failed to initialize new libusb context; received error %d", errnum)
 	}
 	return newContext, nil
 }
@@ -75,7 +75,6 @@ func (ctx *Context) Close() error {
 func (ctx *Context) SetDebug(level LogLevel) {
 	C.set_debug(ctx.libusbContext, C.int(level))
 	ctx.LogLevel = level
-	return
 }
 
 // DeviceList returns an array of devices for the context.
@@ -113,7 +112,7 @@ func (ctx *Context) OpenDeviceWithVendorProduct(
 	deviceHandle.libusbDeviceHandle = C.libusb_open_device_with_vid_pid(
 		ctx.libusbContext, C.uint16_t(vendorID), C.uint16_t(productID))
 	if deviceHandle.libusbDeviceHandle == nil {
-		return nil, nil, fmt.Errorf("Could not open USB device %v:%v",
+		return nil, nil, fmt.Errorf("could not open USB device %v:%v",
 			vendorID,
 			productID,
 		)
