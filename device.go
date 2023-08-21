@@ -10,7 +10,6 @@ package libusb
 import "C"
 import (
 	"fmt"
-	"reflect"
 	"unsafe"
 )
 
@@ -171,16 +170,9 @@ func (dev *Device) ActiveConfigDescriptor() (*ConfigDescriptor, error) {
 		MaxPowerMilliAmperes: 2 * uint(config.MaxPower), // Convert from 2 mA to just mA
 		SupportedInterfaces:  nil,
 	}
-	// Per Turning C arrays into Go slices
-	// https://github.com/golang/go/wiki/cgo#turning-c-arrays-into-go-slices
 	var cInterface *C.struct_libusb_interface = config._interface
 	length := activeConfiguration.NumInterfaces
-	hdr := reflect.SliceHeader{
-		Data: uintptr(unsafe.Pointer(cInterface)),
-		Len:  length,
-		Cap:  length,
-	}
-	libusbInterfaces := *(*[]C.struct_libusb_interface)(unsafe.Pointer(&hdr))
+	libusbInterfaces := unsafe.Slice(cInterface, length)
 
 	var supportedInterfaces SupportedInterfaces
 	// Loop through the array of interfaces support by this configuration
@@ -193,12 +185,7 @@ func (dev *Device) ActiveConfigDescriptor() (*ConfigDescriptor, error) {
 		var interfaceDescriptors InterfaceDescriptors
 		var cInterfaceDescriptor *C.struct_libusb_interface_descriptor = libusbInterface.altsetting
 		length := int(libusbInterface.num_altsetting)
-		hdr := reflect.SliceHeader{
-			Data: uintptr(unsafe.Pointer(cInterfaceDescriptor)),
-			Len:  length,
-			Cap:  length,
-		}
-		libusbInterfaceDescriptors := *(*[]C.struct_libusb_interface_descriptor)(unsafe.Pointer(&hdr))
+		libusbInterfaceDescriptors := unsafe.Slice(cInterfaceDescriptor, length)
 
 		// Loop through the array of interface descriptors
 		// const struct libusb_interface_descriptor * altsetting
@@ -218,12 +205,7 @@ func (dev *Device) ActiveConfigDescriptor() (*ConfigDescriptor, error) {
 			var endpointDescriptors EndpointDescriptors
 			var cEndpointDescriptor *C.struct_libusb_endpoint_descriptor = libusbInterfaceDescriptor.endpoint
 			length := int(libusbInterfaceDescriptor.bNumEndpoints)
-			hdr := reflect.SliceHeader{
-				Data: uintptr(unsafe.Pointer(cEndpointDescriptor)),
-				Len:  length,
-				Cap:  length,
-			}
-			libusbEndpointDescriptors := *(*[]C.struct_libusb_endpoint_descriptor)(unsafe.Pointer(&hdr))
+			libusbEndpointDescriptors := unsafe.Slice(cEndpointDescriptor, length)
 
 			// Loop through the array of endpoint descriptors
 			// const struct libusb_endpoint_descriptor * endpoint

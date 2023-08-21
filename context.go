@@ -14,7 +14,6 @@ import "C"
 import (
 	"fmt"
 	"log"
-	"reflect"
 	"unsafe"
 )
 
@@ -87,12 +86,7 @@ func (ctx *Context) DeviceList() ([]*Device, error) {
 		return nil, ErrorCode(numDevicesFound)
 	}
 	defer C.libusb_free_device_list(list, unrefDevices)
-	var libusbDevices []*C.libusb_device
-	*(*reflect.SliceHeader)(unsafe.Pointer(&libusbDevices)) = reflect.SliceHeader{
-		Data: uintptr(unsafe.Pointer(list)),
-		Len:  numDevicesFound,
-		Cap:  numDevicesFound,
-	}
+	libusbDevices := unsafe.Slice(list, numDevicesFound)
 	for _, thisLibusbDevice := range libusbDevices {
 		thisDevice := Device{
 			libusbDevice: thisLibusbDevice,
