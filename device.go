@@ -173,6 +173,12 @@ func (dev *Device) ActiveConfigDescriptor() (*ConfigDescriptor, error) {
 	var cInterface *C.struct_libusb_interface = config._interface
 	length := activeConfiguration.NumInterfaces
 	libusbInterfaces := unsafe.Slice(cInterface, length)
+	// hdr := reflect.SliceHeader{
+	// 	Data: uintptr(unsafe.Pointer(cInterface)),
+	// 	Len:  length,
+	// 	Cap:  length,
+	// }
+	// libusbInterfaces := *(*[]C.struct_libusb_interface)(unsafe.Pointer(&hdr))
 
 	var supportedInterfaces SupportedInterfaces
 	// Loop through the array of interfaces support by this configuration
@@ -186,6 +192,12 @@ func (dev *Device) ActiveConfigDescriptor() (*ConfigDescriptor, error) {
 		var cInterfaceDescriptor *C.struct_libusb_interface_descriptor = libusbInterface.altsetting
 		length := int(libusbInterface.num_altsetting)
 		libusbInterfaceDescriptors := unsafe.Slice(cInterfaceDescriptor, length)
+		// hdr := reflect.SliceHeader{
+		// 	Data: uintptr(unsafe.Pointer(cInterfaceDescriptor)),
+		// 	Len:  length,
+		// 	Cap:  length,
+		// }
+		// libusbInterfaceDescriptors := *(*[]C.struct_libusb_interface_descriptor)(unsafe.Pointer(&hdr))
 
 		// Loop through the array of interface descriptors
 		// const struct libusb_interface_descriptor * altsetting
@@ -206,6 +218,13 @@ func (dev *Device) ActiveConfigDescriptor() (*ConfigDescriptor, error) {
 			var cEndpointDescriptor *C.struct_libusb_endpoint_descriptor = libusbInterfaceDescriptor.endpoint
 			length := int(libusbInterfaceDescriptor.bNumEndpoints)
 			libusbEndpointDescriptors := unsafe.Slice(cEndpointDescriptor, length)
+			// hdr := reflect.SliceHeader{
+			// 	Data: uintptr(unsafe.Pointer(cEndpointDescriptor)),
+			// 	Len:  length,
+			// 	Cap:  length,
+			// }
+
+			// libusbEndpointDescriptors := *(*[]C.struct_libusb_endpoint_descriptor)(unsafe.Pointer(&hdr))
 
 			// Loop through the array of endpoint descriptors
 			// const struct libusb_endpoint_descriptor * endpoint

@@ -50,7 +50,7 @@ func (dh *DeviceHandle) StringDescriptorASCII(
 	bytesRead, _ := C.libusb_get_string_descriptor_ascii(
 		dh.libusbDeviceHandle,
 		C.uint8_t(descIndex),
-		// Unsafe pointer -> http://stackoverflow.com/a/16376039/95592
+		// Unsafe pointer -> https://stackoverflow.com/a/16376039/95592
 		(*C.uchar)(unsafe.Pointer(&data[0])),
 		C.int(length),
 	)

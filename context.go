@@ -87,6 +87,13 @@ func (ctx *Context) DeviceList() ([]*Device, error) {
 	}
 	defer C.libusb_free_device_list(list, unrefDevices)
 	libusbDevices := unsafe.Slice(list, numDevicesFound)
+	// var libusbDevices []*C.libusb_device
+	// *(*reflect.SliceHeader)(unsafe.Pointer(&libusbDevices)) = reflect.SliceHeader{
+	// 	Data: uintptr(unsafe.Pointer(list)),
+	// 	Len:  numDevicesFound,
+	// 	Cap:  numDevicesFound,
+	// }
+
 	for _, thisLibusbDevice := range libusbDevices {
 		thisDevice := Device{
 			libusbDevice: thisLibusbDevice,

@@ -1,4 +1,4 @@
-// Copyright (c) 2016 The libusb developers. All rights reserved.
+// Copyright (c) 2016–2023 The libusb developers. All rights reserved.
 // Project site: https://github.com/gotmc/libusb
 // Use of this source code is governed by a MIT-style license that
 // can be found in the LICENSE.txt file for the project.
@@ -6,12 +6,25 @@
 package main
 
 import (
+	"fmt"
 	"log"
 
-	"github.com/gotmc/libusb"
+	libusb "github.com/gotmc/libusb/v2"
 )
 
+func showVersion() {
+	version := libusb.Version()
+	fmt.Printf(
+		"Using libusb version %d.%d.%d (%d)\n",
+		version.Major,
+		version.Minor,
+		version.Micro,
+		version.Nano,
+	)
+}
+
 func main() {
+	showVersion()
 	ctx, err := libusb.NewContext()
 	if err != nil {
 		log.Fatal("Couldn't create USB context. Ending now.")
@@ -28,6 +41,12 @@ func main() {
 			log.Printf("Error getting device descriptor: %s", err)
 			continue
 		}
+		addr, err := device.DeviceAddress()
+		if err != nil {
+			log.Printf("Error getting device address: %s", err)
+			continue
+		}
+		log.Printf("Device address: %d", addr)
 		handle, err := device.Open()
 		if err != nil {
 			log.Printf("Error opening device: %s", err)
