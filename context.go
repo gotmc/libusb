@@ -8,7 +8,11 @@ package libusb
 // #cgo pkg-config: libusb-1.0
 // #include <libusb.h>
 // int set_debug(libusb_context * ctx, int level) {
-//   return libusb_set_option(ctx, LIBUSB_OPTION_LOG_LEVEL, level);
+// #if HAVE_LIBUSB_SET_OPTION
+//    return libusb_set_option(ctx, LIBUSB_OPTION_LOG_LEVEL, level);
+// #else
+//    libusb_set_debug(ctx, LIBUSB_LOG_LEVEL_INFO);
+// #endif
 // }
 import "C"
 import (
