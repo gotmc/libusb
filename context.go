@@ -11,9 +11,9 @@ package libusb
 //   return libusb_set_option(ctx, LIBUSB_OPTION_LOG_LEVEL, level);
 // }
 import "C"
+
 import (
 	"fmt"
-	"log"
 	"unsafe"
 )
 
@@ -118,17 +118,6 @@ func (ctx *Context) OpenDeviceWithVendorProduct(
 			productID,
 		)
 	}
-	p := make([]byte, 64)
-	idx := uint16(0x0000)
-	n, err := deviceHandle.ControlTransfer(0xA1, 7, 0x0000, idx, p, 0x18, 2000)
-	if err != nil {
-		log.Printf("Error sending control transfer: %s", err)
-	}
-	log.Printf("Sent %d bytes on control transfer", n)
-	log.Printf("capabilities = %q", p)
-	log.Printf("capabilities = %v", p)
-	log.Printf("cap[14] := %b (%d)", p[14], p[14])
-	log.Printf("cap[15] := %b (%d)", p[15], p[15])
 	device := Device{
 		libusbDevice: C.libusb_get_device(deviceHandle.libusbDeviceHandle),
 	}
