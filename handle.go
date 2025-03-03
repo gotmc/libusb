@@ -22,19 +22,27 @@ func (dh *DeviceHandle) StringDescriptor(
 	descIndex uint8,
 	langID uint16,
 ) (string, error) {
-	var cData *C.uchar
+	if dh == nil || dh.libusbDeviceHandle == nil {
+		return "", ErrorCode(errorInvalidParam)
+	}
+
+	// Allocate buffer for data
 	length := 512
+	cData := make([]C.uchar, length)
+
 	usberr := C.libusb_get_string_descriptor(
 		dh.libusbDeviceHandle,
 		C.uint8_t(descIndex),
 		C.uint16_t(langID),
-		cData,
+		&cData[0],
 		C.int(length),
 	)
 	if usberr < 0 {
 		return "", ErrorCode(usberr)
 	}
-	data := (*C.char)(unsafe.Pointer(cData))
+
+	// Convert to Go string
+	data := (*C.char)(unsafe.Pointer(&cData[0]))
 	return C.GoString(data), nil
 }
 
@@ -44,16 +52,25 @@ func (dh *DeviceHandle) StringDescriptor(
 func (dh *DeviceHandle) StringDescriptorASCII(
 	descIndex uint8,
 ) (string, error) {
+	if dh == nil || dh.libusbDeviceHandle == nil {
+		return "", ErrorCode(errorInvalidParam)
+	}
+
 	// TODO(mdr): Should the length be a constant? Why did I pick 256 bytes?
 	length := 256
 	data := make([]byte, length)
-	bytesRead, _ := C.libusb_get_string_descriptor_ascii(
+	bytesRead, err := C.libusb_get_string_descriptor_ascii(
 		dh.libusbDeviceHandle,
 		C.uint8_t(descIndex),
 		// Unsafe pointer -> https://stackoverflow.com/a/16376039/95592
 		(*C.uchar)(unsafe.Pointer(&data[0])),
 		C.int(length),
 	)
+
+	// Check both bytesRead and err
+	if err != nil {
+		return "", err
+	}
 	if bytesRead < 0 {
 		return "", ErrorCode(bytesRead)
 	}
@@ -62,6 +79,9 @@ func (dh *DeviceHandle) StringDescriptorASCII(
 
 // Close implements libusb_close to close the device handle.
 func (dh *DeviceHandle) Close() error {
+	if dh == nil || dh.libusbDeviceHandle == nil {
+		return ErrorCode(errorInvalidParam)
+	}
 	C.libusb_close(dh.libusbDeviceHandle)
 	return nil
 }
@@ -75,17 +95,25 @@ func (dh *DeviceHandle) Close() error {
 // Configuration implements the libusb_get_configuration function to
 // determine the bConfigurationValue of the currently active configuration.
 func (dh *DeviceHandle) Configuration() (int, error) {
-	var configuration *C.int
-	err := C.libusb_get_configuration(dh.libusbDeviceHandle, configuration)
+	if dh == nil || dh.libusbDeviceHandle == nil {
+		return 0, ErrorCode(errorInvalidParam)
+	}
+
+	// Allocate memory for the configuration value
+	var configuration C.int
+	err := C.libusb_get_configuration(dh.libusbDeviceHandle, &configuration)
 	if err != 0 {
 		return 0, ErrorCode(err)
 	}
-	return int(*configuration), nil
+	return int(configuration), nil
 }
 
 // SetConfiguration implements libusb_set_configuration to set the active
 // configuration for the device.
 func (dh *DeviceHandle) SetConfiguration(configuration int) error {
+	if dh == nil || dh.libusbDeviceHandle == nil {
+		return ErrorCode(errorInvalidParam)
+	}
 	err := C.libusb_set_configuration(dh.libusbDeviceHandle,
 		C.int(configuration))
 	if err != 0 {
@@ -98,6 +126,9 @@ func (dh *DeviceHandle) SetConfiguration(configuration int) error {
 // given device handle. You must claim the interface you wish to use before you
 // can perform I/O on any of its endpoints.
 func (dh *DeviceHandle) ClaimInterface(interfaceNum int) error {
+	if dh == nil || dh.libusbDeviceHandle == nil {
+		return ErrorCode(errorInvalidParam)
+	}
 	err := C.libusb_claim_interface(dh.libusbDeviceHandle, C.int(interfaceNum))
 	if err != 0 {
 		return ErrorCode(err)
@@ -108,6 +139,9 @@ func (dh *DeviceHandle) ClaimInterface(interfaceNum int) error {
 // ReleaseInterface implements libusb_release_interface to release an interface
 // previously claimed with libusb_claim_interface() (i.e., ClaimInterface()).
 func (dh *DeviceHandle) ReleaseInterface(interfaceNum int) error {
+	if dh == nil || dh.libusbDeviceHandle == nil {
+		return ErrorCode(errorInvalidParam)
+	}
 	err := C.libusb_release_interface(dh.libusbDeviceHandle, C.int(interfaceNum))
 	if err != 0 {
 		return ErrorCode(err)
@@ -120,6 +154,9 @@ func (dh *DeviceHandle) SetInterfaceAltSetting(
 	interfaceNum int,
 	alternateSetting int,
 ) error {
+	if dh == nil || dh.libusbDeviceHandle == nil {
+		return ErrorCode(errorInvalidParam)
+	}
 	err := C.libusb_set_interface_alt_setting(
 		dh.libusbDeviceHandle,
 		C.int(interfaceNum),
@@ -140,6 +177,9 @@ func (dh *DeviceHandle) SetInterfaceAltSetting(
 // ResetDevice implements libusb_reset_device to perform a USB port reset to
 // reinitialize a device.
 func (dh *DeviceHandle) ResetDevice() error {
+	if dh == nil || dh.libusbDeviceHandle == nil {
+		return ErrorCode(errorInvalidParam)
+	}
 	err := C.libusb_reset_device(dh.libusbDeviceHandle)
 	if err != 0 {
 		return ErrorCode(err)
@@ -150,6 +190,9 @@ func (dh *DeviceHandle) ResetDevice() error {
 // KernelDriverActive implements libusb_kernel_driver_active to determine if a
 // kernel driver is active on an interface.
 func (dh *DeviceHandle) KernelDriverActive(interfaceNum int) (bool, error) {
+	if dh == nil || dh.libusbDeviceHandle == nil {
+		return false, ErrorCode(errorInvalidParam)
+	}
 	ret := C.libusb_kernel_driver_active(
 		dh.libusbDeviceHandle, C.int(interfaceNum))
 	if ret == 1 {
@@ -163,6 +206,9 @@ func (dh *DeviceHandle) KernelDriverActive(interfaceNum int) (bool, error) {
 // DetachKernelDriver implements libusb_detach_kernel_driver to detach a kernel
 // driver from an interface.
 func (dh *DeviceHandle) DetachKernelDriver(interfaceNum int) error {
+	if dh == nil || dh.libusbDeviceHandle == nil {
+		return ErrorCode(errorInvalidParam)
+	}
 	err := C.libusb_detach_kernel_driver(
 		dh.libusbDeviceHandle, C.int(interfaceNum))
 	if err != 0 {
@@ -175,6 +221,9 @@ func (dh *DeviceHandle) DetachKernelDriver(interfaceNum int) error {
 // interface's kernel driver, which was previously detached using
 // libusb_detach_kernel_driver().
 func (dh *DeviceHandle) AttachKernelDriver(interfaceNum int) error {
+	if dh == nil || dh.libusbDeviceHandle == nil {
+		return ErrorCode(errorInvalidParam)
+	}
 	err := C.libusb_attach_kernel_driver(
 		dh.libusbDeviceHandle, C.int(interfaceNum))
 	if err != 0 {
@@ -186,6 +235,9 @@ func (dh *DeviceHandle) AttachKernelDriver(interfaceNum int) error {
 // SetAutoDetachKernelDriver implements libusb_set_auto_detach_kernel_driver to
 // enable/disable libusb's automatic kernel driver detachment.
 func (dh *DeviceHandle) SetAutoDetachKernelDriver(enable bool) error {
+	if dh == nil || dh.libusbDeviceHandle == nil {
+		return ErrorCode(errorInvalidParam)
+	}
 	cEnable := C.int(0)
 	if enable {
 		cEnable = C.int(1)

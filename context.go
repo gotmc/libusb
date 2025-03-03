@@ -7,11 +7,17 @@ package libusb
 
 // #cgo pkg-config: libusb-1.0
 // #include <libusb.h>
+// /* Define LIBUSB_OPTION_LOG_LEVEL if not available in the libusb version */
+// #if !defined(LIBUSB_OPTION_LOG_LEVEL) && defined(LIBUSB_API_VERSION) && (LIBUSB_API_VERSION >= 0x01000107)
+// #define LIBUSB_OPTION_LOG_LEVEL 1
+// #endif
+//
 // int set_debug(libusb_context * ctx, int level) {
-// #if HAVE_LIBUSB_SET_OPTION
+// #if defined(HAVE_LIBUSB_SET_OPTION) && defined(LIBUSB_OPTION_LOG_LEVEL)
 //    return libusb_set_option(ctx, LIBUSB_OPTION_LOG_LEVEL, level);
 // #else
-//    libusb_set_debug(ctx, LIBUSB_LOG_LEVEL_INFO);
+//    libusb_set_debug(ctx, level);
+//    return 0;
 // #endif
 // }
 import "C"
