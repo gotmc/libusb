@@ -1,6 +1,6 @@
-module github.com/mil-ast/libusb/example/hotplug
+module github.com/mil-ast/libusb/examples/hotplug
 
-go 1.15
+go 1.21
 
 require github.com/gotmc/libusb/v2 v2.0.1
 

@@ -1,4 +1,4 @@
-module github.com/gotmc/libusb/examples/find_printer
+module github.com/gotmc/libusb/examples/control_transfer
 
 go 1.21
 

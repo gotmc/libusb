@@ -1,6 +1,6 @@
-module github.com/gotmc/libusb/example/get_sn_lite
+module github.com/gotmc/libusb/examples/get_sn_lite
 
-go 1.17
+go 1.21
 
 require github.com/gotmc/libusb/v2 v2.3.0
 

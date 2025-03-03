@@ -29,7 +29,10 @@ _testmain.go
 coverage.out
 
 # Ignore executables
-example/get_sn/get_sn
-example/get_sn_lite/get_sn_lite
-example/key33220/key33220
-example/keyu2751a/keyu2751a
+examples/control_transfer/control_transfer
+examples/find_printer/find_printer
+examples/get_sn/get_sn
+examples/get_sn_lite/get_sn_lite
+examples/hotplug/hotplug
+examples/key33220/key33220
+examples/keyu2751a/keyu2751a
