@@ -41,7 +41,7 @@ Documentation can be found at either:
 
 - <https://godoc.org/github.com/gotmc/libusb>
 - <http://localhost:6060/pkg/github.com/gotmc/libusb/> after running `$
-  godoc -http=:6060`
+godoc -http=:6060`
 
 ## Contributing
 
@@ -73,13 +73,14 @@ There are other USB Go libraries besides [libusb][]. Below are a few
 alternatives:
 
 - [google/gousb][] — Wraps the [libusb C library][libusb-c] to provde
-    Go-bindings. This library supersedes [kylelemons/gousb][], which is not
-    archived. Apachage-2.0 license.
+  Go-bindings. This library supersedes [kylelemons/gousb][], which is not
+  archived. Apachage-2.0 license.
 - [karalabe/usb][] — Does not require the [libusb C library][libusb-c] to be
-    installed. Written in C to be a cross platform, fully self-contained library
-    for accessing and communicating with USB devices either via HID or low level
-    interrupts. LGPL-3.0 license.
-- [deadsy/libusb][] — Wraps the [libusb C library][libusb-c]. MIT license.
+  installed. Written in C to be a cross platform, fully self-contained library
+  for accessing and communicating with USB devices either via HID or low level
+  interrupts. LGPL-3.0 license.
+- [deadsy/libusb][] — Wraps the [libusb C library][libusb-c]. MIT license. As of
+  05-Apr-24, this package hasn't been updated in six years.
 
 ## License
 
