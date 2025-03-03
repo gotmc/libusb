@@ -76,6 +76,10 @@ func (dh *DeviceHandle) ControlTransfer(
 	length int,
 	timeout int,
 ) (int, error) {
+	if dh == nil || dh.libusbDeviceHandle == nil {
+		return 0, ErrorCode(errorInvalidParam)
+	}
+	
 	ret := C.libusb_control_transfer(
 		dh.libusbDeviceHandle,
 		C.uint8_t(requestType),
@@ -90,6 +94,79 @@ func (dh *DeviceHandle) ControlTransfer(
 		return 0, ErrorCode(ret)
 	}
 	return int(ret), nil
+}
+
+// ControlTransferWithTypes is a more type-safe version of ControlTransfer that accepts
+// TransferDirection, RequestType, and RequestRecipient components to build the bmRequestType.
+// This allows for more readable and maintainable code when using constant values.
+func (dh *DeviceHandle) ControlTransferWithTypes(
+	direction TransferDirection,
+	reqType RequestType,
+	recipient RequestRecipient,
+	request byte,
+	value uint16,
+	index uint16,
+	data []byte,
+	length int,
+	timeout int,
+) (int, error) {
+	requestType := BitmapRequestType(direction, reqType, recipient)
+	return dh.ControlTransfer(
+		requestType,
+		request,
+		value,
+		index,
+		data,
+		length,
+		timeout,
+	)
+}
+
+// ControlOut is a helper method for control OUT transfers (host to device)
+func (dh *DeviceHandle) ControlOut(
+	reqType RequestType,
+	recipient RequestRecipient,
+	request byte,
+	value uint16,
+	index uint16,
+	data []byte,
+	timeout int,
+) (int, error) {
+	return dh.ControlTransferWithTypes(
+		HostToDevice,
+		reqType,
+		recipient,
+		request,
+		value,
+		index,
+		data,
+		len(data),
+		timeout,
+	)
+}
+
+// ControlIn is a helper method for control IN transfers (device to host)
+func (dh *DeviceHandle) ControlIn(
+	reqType RequestType,
+	recipient RequestRecipient,
+	request byte,
+	value uint16,
+	index uint16,
+	data []byte,
+	maxReceiveLength int,
+	timeout int,
+) (int, error) {
+	return dh.ControlTransferWithTypes(
+		DeviceToHost,
+		reqType,
+		recipient,
+		request,
+		value,
+		index,
+		data,
+		maxReceiveLength,
+		timeout,
+	)
 }
 
 // InterruptTransfer performs a USB interrupt transfer.
