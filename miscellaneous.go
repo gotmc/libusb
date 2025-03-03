@@ -29,17 +29,20 @@ func (err ErrorCode) Error() string {
 
 // ErrorName implements the libusb_error_name function.
 func ErrorName(err ErrorCode) string {
-	return C.GoString(C.libusb_error_name(C.int(err)))
+	// Convert directly to C.int to avoid potential type mismatches across platforms
+	return C.GoString(C.libusb_error_name(C.int(int(err))))
 }
 
 // StrError implements the libusb_strerror function.
 func StrError(err ErrorCode) string {
-	return C.GoString(C.libusb_strerror_wrapper(C.int(err)))
+	// Convert directly to C.int to avoid potential type mismatches across platforms
+	return C.GoString(C.libusb_strerror_wrapper(C.int(int(err))))
 }
 
 // SetLocale sets the locale for libusb errors.
 func SetLocale(locale string) ErrorCode {
-	return ErrorCode(C.libusb_setlocale(C.CString(locale)))
+	// Explicitly convert to ensure type compatibility
+	return ErrorCode(int(C.libusb_setlocale(C.CString(locale))))
 }
 
 // CPUtoLE16 converts "a 16-bit value from host-endian to little-endian format.
