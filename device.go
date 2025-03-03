@@ -298,3 +298,44 @@ func (dev *Device) ConfigDescriptorByValue(configValue int) (*ConfigDescriptor, 
 	}
 	return configuration, nil
 }
+
+// FindInterfacesByClass finds all interfaces that match the given USB class code.
+// This is particularly useful for devices where the device class is reported as
+// LIBUSB_CLASS_PER_INTERFACE (0), where individual interfaces have their own class codes.
+//
+// For example, to find all printer class interfaces:
+//
+//	printerInterfaces, err := device.FindInterfacesByClass(libusb.InterfaceClassPrinter)
+//
+// Example of finding and printing information about a printer device:
+//
+//	package main
+//
+//	import (
+//		"fmt"
+//		"github.com/gotmc/libusb/v2"
+//	)
+//
+//	func main() {
+//		ctx, _ := libusb.NewContext()
+//		devices, _ := ctx.DeviceList()
+//
+//		for _, device := range devices {
+//			desc, _ := device.DeviceDescriptor()
+//			// Check if this is a per-interface class device
+//			if desc.DeviceClass == 0 {
+//				// Find printer interfaces (class 7)
+//				printerIfaces, _ := device.FindInterfacesByClass(libusb.InterfaceClassPrinter)
+//				if len(printerIfaces) > 0 {
+//					fmt.Printf("Found printer device: VID=0x%04x, PID=0x%04x\n", desc.VendorID, desc.ProductID)
+//				}
+//			}
+//		}
+//	}
+func (dev *Device) FindInterfacesByClass(class uint8) (InterfaceDescriptors, error) {
+	config, err := dev.ActiveConfigDescriptor()
+	if err != nil {
+		return nil, err
+	}
+	return config.SupportedInterfaces.GetAllInterfacesByClass(class), nil
+}
