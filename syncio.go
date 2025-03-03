@@ -79,7 +79,7 @@ func (dh *DeviceHandle) ControlTransfer(
 	if dh == nil || dh.libusbDeviceHandle == nil {
 		return 0, ErrorCode(errorInvalidParam)
 	}
-	
+
 	ret := C.libusb_control_transfer(
 		dh.libusbDeviceHandle,
 		C.uint8_t(requestType),

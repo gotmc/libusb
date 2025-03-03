@@ -22,6 +22,7 @@ import "C"
 import (
 	"fmt"
 	"log"
+	"sync"
 	"unsafe"
 )
 
@@ -54,6 +55,7 @@ type hotplugCallback struct {
 type HotplugCallbackStorage struct {
 	callbackMap map[uint32]hotplugCallback
 	done        chan struct{}
+	mu          sync.RWMutex // Protects the callbackMap from concurrent access
 }
 
 var hotplugCallbackStorage HotplugCallbackStorage
@@ -65,7 +67,9 @@ func (ctx *Context) newHotPlugHandler() {
 	go hotplugCallbackStorage.handleEvents(ctx.libusbContext)
 }
 
-func (s HotplugCallbackStorage) isEmpty() bool {
+func (s *HotplugCallbackStorage) isEmpty() bool {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
 	return s.callbackMap == nil
 }
 
@@ -112,10 +116,12 @@ func (ctx *Context) HotplugRegisterCallbackEvent(vendorID, productID uint16, eve
 		return fmt.Errorf("libusb_hotplug_register_callback error: %s", ErrorCode(rc))
 	}
 
+	hotplugCallbackStorage.mu.Lock()
 	hotplugCallbackStorage.callbackMap[vidPidToUint32(vendorID, productID)] = hotplugCallback{
 		handler: &cbHandle,
 		fn:      cb,
 	}
+	hotplugCallbackStorage.mu.Unlock()
 
 	return nil
 }
@@ -128,16 +134,22 @@ func (ctx *Context) HotplugDeregisterCallback(vendorID, productID uint16) error 
 
 	key := vidPidToUint32(vendorID, productID)
 
+	hotplugCallbackStorage.mu.RLock()
 	cb, ok := hotplugCallbackStorage.callbackMap[key]
+	hotplugCallbackStorage.mu.RUnlock()
+
 	if !ok {
 		return nil
 	}
 
 	C.libusb_hotplug_deregister_callback(ctx.libusbContext, *cb.handler)
 
+	hotplugCallbackStorage.mu.Lock()
 	delete(hotplugCallbackStorage.callbackMap, key)
+	mapEmpty := len(hotplugCallbackStorage.callbackMap) == 0
+	hotplugCallbackStorage.mu.Unlock()
 
-	if len(hotplugCallbackStorage.callbackMap) == 0 {
+	if mapEmpty {
 		ctx.hotplugHandleEventsCompleteAll()
 	}
 	return nil
@@ -145,10 +157,23 @@ func (ctx *Context) HotplugDeregisterCallback(vendorID, productID uint16) error 
 
 // HotplugDeregisterAllCallbacks ...
 func (ctx *Context) HotplugDeregisterAllCallbacks() error {
-	if hotplugCallbackStorage.callbackMap != nil {
+	hotplugCallbackStorage.mu.RLock()
+	mapExists := hotplugCallbackStorage.callbackMap != nil
+
+	if mapExists {
+		// Make a copy of the handlers to avoid holding the lock during C function calls
+		handlers := make([]*C.libusb_hotplug_callback_handle, 0, len(hotplugCallbackStorage.callbackMap))
 		for _, cb := range hotplugCallbackStorage.callbackMap {
-			C.libusb_hotplug_deregister_callback(ctx.libusbContext, *cb.handler)
+			handlers = append(handlers, cb.handler)
 		}
+		hotplugCallbackStorage.mu.RUnlock()
+
+		// Deregister callbacks without holding the lock
+		for _, handler := range handlers {
+			C.libusb_hotplug_deregister_callback(ctx.libusbContext, *handler)
+		}
+	} else {
+		hotplugCallbackStorage.mu.RUnlock()
 	}
 
 	ctx.hotplugHandleEventsCompleteAll()
@@ -160,9 +185,15 @@ func (ctx *Context) hotplugHandleEventsCompleteAll() {
 	if hotplugCallbackStorage.isEmpty() {
 		return
 	}
+
+	// Signal the event handler to stop
 	hotplugCallbackStorage.done <- struct{}{}
 
+	// Clear the callbackMap and close the channel
+	hotplugCallbackStorage.mu.Lock()
 	hotplugCallbackStorage.callbackMap = nil
+	hotplugCallbackStorage.mu.Unlock()
+
 	close(hotplugCallbackStorage.done)
 }
 
@@ -200,15 +231,30 @@ func libusbHotplugCallback(ctx *C.libusb_context, dev *C.libusb_device, event C.
 		e = HotplugUndefined
 	}
 
+	// Read callback map with a read lock
+	hotplugCallbackStorage.mu.RLock()
+	// Get device-specific callback
 	cb, ok := hotplugCallbackStorage.callbackMap[vidPidToUint32(vendorID, productID)]
+	var deviceCallback HotPlugCbFunc
 	if ok {
-		cb.fn(vendorID, productID, e)
+		deviceCallback = cb.fn
 	}
 
-	// for all
+	// Get the callback for all devices
 	cb, ok = hotplugCallbackStorage.callbackMap[0]
+	var allCallback HotPlugCbFunc
 	if ok {
-		cb.fn(vendorID, productID, e)
+		allCallback = cb.fn
+	}
+	hotplugCallbackStorage.mu.RUnlock()
+
+	// Call callbacks outside the lock
+	if deviceCallback != nil {
+		deviceCallback(vendorID, productID, e)
+	}
+
+	if allCallback != nil {
+		allCallback(vendorID, productID, e)
 	}
 
 	return C.LIBUSB_SUCCESS
