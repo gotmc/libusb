@@ -1,4 +1,4 @@
-// Copyright (c) 2023 The libusb developers. All rights reserved.
+// Copyright (c) 2015-2025 The libusb developers. All rights reserved.
 // Project site: https://github.com/gotmc/libusb
 // Use of this source code is governed by a MIT-style license that
 // can be found in the LICENSE.txt file for the project.
@@ -40,21 +40,21 @@ func main() {
 		// Print the device class information
 		fmt.Printf("\nDevice %d: VID=0x%04x, PID=0x%04x\n", i, desc.VendorID, desc.ProductID)
 		fmt.Printf("  Device Class: %s (0x%02x)\n", desc.DeviceClass, byte(desc.DeviceClass))
-		
+
 		// If this is a per-interface class device, inspect the interfaces
 		if desc.DeviceClass == libusb.perInterface {
 			fmt.Println("  This device uses per-interface class codes. Checking interfaces...")
-			
+
 			// Find printer interfaces (class 7)
 			printerIfaces, err := device.FindInterfacesByClass(libusb.InterfaceClassPrinter)
 			if err != nil {
 				log.Printf("  Error getting interface info: %s", err)
 				continue
 			}
-			
+
 			if len(printerIfaces) > 0 {
 				fmt.Printf("  Found %d printer interface(s)!\n", len(printerIfaces))
-				
+
 				// Print details about each printer interface
 				for j, iface := range printerIfaces {
 					fmt.Printf("  Printer Interface %d:\n", j)
@@ -68,3 +68,4 @@ func main() {
 		}
 	}
 }
+

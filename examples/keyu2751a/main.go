@@ -1,4 +1,4 @@
-// Copyright (c) 2015-2020 The libusb developers. All rights reserved.
+// Copyright (c) 2015-2025 The libusb developers. All rights reserved.
 // Project site: https://github.com/gotmc/libusb
 // Use of this source code is governed by a MIT-style license that
 // can be found in the LICENSE.txt file for the project.
@@ -75,7 +75,12 @@ func main() {
 }
 
 func showInfo(ctx *libusb.Context, name string, vendorID, productID uint16) {
-	fmt.Printf("Let's open the %s using vendor ID %d and product ID %d\n", name, vendorID, productID)
+	fmt.Printf(
+		"Let's open the %s using vendor ID %d and product ID %d\n",
+		name,
+		vendorID,
+		productID,
+	)
 	usbDevice, usbDeviceHandle, err := ctx.OpenDeviceWithVendorProduct(vendorID, productID)
 	if err != nil {
 		fmt.Printf("=> Failed opening the %s: %v\n", name, err)
@@ -115,21 +120,37 @@ func showInfo(ctx *libusb.Context, name string, vendorID, productID uint16) {
 		configDescriptor.SupportedInterfaces[0].NumAltSettings)
 	firstDescriptor := configDescriptor.SupportedInterfaces[0].InterfaceDescriptors[0]
 	fmt.Printf("=> The first interface descriptor has a length of %d.\n", firstDescriptor.Length)
-	fmt.Printf("=> The first interface descriptor is interface number %d.\n", firstDescriptor.InterfaceNumber)
-	fmt.Printf("=> The first interface descriptor has %d endpoint(s).\n", firstDescriptor.NumEndpoints)
+	fmt.Printf(
+		"=> The first interface descriptor is interface number %d.\n",
+		firstDescriptor.InterfaceNumber,
+	)
+	fmt.Printf(
+		"=> The first interface descriptor has %d endpoint(s).\n",
+		firstDescriptor.NumEndpoints,
+	)
 	fmt.Printf(
 		"   => USB-IF class %d, subclass %d, protocol %d.\n",
-		firstDescriptor.InterfaceClass, firstDescriptor.InterfaceSubClass, firstDescriptor.InterfaceProtocol,
+		firstDescriptor.InterfaceClass,
+		firstDescriptor.InterfaceSubClass,
+		firstDescriptor.InterfaceProtocol,
 	)
 	for i, endpoint := range firstDescriptor.EndpointDescriptors {
 		fmt.Printf(
 			"   => Endpoint index %d on Interface %d has the following properties:\n",
 			i, firstDescriptor.InterfaceNumber)
-		fmt.Printf("     => Address: %d (b%08b)\n", endpoint.EndpointAddress, endpoint.EndpointAddress)
+		fmt.Printf(
+			"     => Address: %d (b%08b)\n",
+			endpoint.EndpointAddress,
+			endpoint.EndpointAddress,
+		)
 		fmt.Printf("       => Endpoint #: %d\n", endpoint.Number())
 		fmt.Printf("       => Direction: %s (%d)\n", endpoint.Direction(), endpoint.Direction())
 		fmt.Printf("     => Attributes: %d (b%08b) \n", endpoint.Attributes, endpoint.Attributes)
-		fmt.Printf("       => Transfer Type: %s (%d) \n", endpoint.TransferType(), endpoint.TransferType())
+		fmt.Printf(
+			"       => Transfer Type: %s (%d) \n",
+			endpoint.TransferType(),
+			endpoint.TransferType(),
+		)
 		fmt.Printf("     => Max packet size: %d\n", endpoint.MaxPacketSize)
 	}
 
