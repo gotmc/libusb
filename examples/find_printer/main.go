@@ -25,7 +25,12 @@ func main() {
 	if err != nil {
 		log.Fatalf("Error getting device list: %s", err)
 	}
-	defer devices.Free()
+	// Clean up device references when done
+	defer func() {
+		for _, device := range devices {
+			device.Close()
+		}
+	}()
 
 	fmt.Printf("Found %d USB devices\n", len(devices))
 
@@ -41,8 +46,8 @@ func main() {
 		fmt.Printf("\nDevice %d: VID=0x%04x, PID=0x%04x\n", i, desc.VendorID, desc.ProductID)
 		fmt.Printf("  Device Class: %s (0x%02x)\n", desc.DeviceClass, byte(desc.DeviceClass))
 
-		// If this is a per-interface class device, inspect the interfaces
-		if desc.DeviceClass == libusb.perInterface {
+		// If this is a per-interface class device (class 0), inspect the interfaces
+		if desc.DeviceClass == 0 {
 			fmt.Println("  This device uses per-interface class codes. Checking interfaces...")
 
 			// Find printer interfaces (class 7)
