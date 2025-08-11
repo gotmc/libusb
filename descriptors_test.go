@@ -184,3 +184,72 @@ func TestTransferTypeStringMethod(t *testing.T) {
 		}
 	}
 }
+
+func TestInterfaceDescriptorsGetInterfacesByClass(t *testing.T) {
+	// Create test interface descriptors
+	printerIface := &InterfaceDescriptor{
+		InterfaceClass:  0x07, // Printer class
+		InterfaceNumber: 0,
+	}
+	audioIface := &InterfaceDescriptor{
+		InterfaceClass:  0x01, // Audio class
+		InterfaceNumber: 1,
+	}
+	anotherPrinterIface := &InterfaceDescriptor{
+		InterfaceClass:  0x07, // Printer class
+		InterfaceNumber: 2,
+	}
+
+	ifaces := InterfaceDescriptors{printerIface, audioIface, anotherPrinterIface}
+
+	// Test finding printer interfaces
+	printerIfaces := ifaces.GetInterfacesByClass(0x07)
+	if len(printerIfaces) != 2 {
+		t.Errorf("Expected 2 printer interfaces, got %d", len(printerIfaces))
+	}
+
+	// Test finding audio interfaces
+	audioIfaces := ifaces.GetInterfacesByClass(0x01)
+	if len(audioIfaces) != 1 {
+		t.Errorf("Expected 1 audio interface, got %d", len(audioIfaces))
+	}
+
+	// Test finding non-existent class
+	massStorageIfaces := ifaces.GetInterfacesByClass(0x08)
+	if len(massStorageIfaces) != 0 {
+		t.Errorf("Expected 0 mass storage interfaces, got %d", len(massStorageIfaces))
+	}
+}
+
+func TestSupportedInterfacesGetAllInterfacesByClass(t *testing.T) {
+	// Create test supported interfaces
+	printerIface := &InterfaceDescriptor{
+		InterfaceClass:  0x07, // Printer class
+		InterfaceNumber: 0,
+	}
+	audioIface := &InterfaceDescriptor{
+		InterfaceClass:  0x01, // Audio class
+		InterfaceNumber: 1,
+	}
+
+	supportedIface1 := &SupportedInterface{
+		InterfaceDescriptors: InterfaceDescriptors{printerIface},
+	}
+	supportedIface2 := &SupportedInterface{
+		InterfaceDescriptors: InterfaceDescriptors{audioIface},
+	}
+
+	supportedInterfaces := SupportedInterfaces{supportedIface1, supportedIface2}
+
+	// Test finding printer interfaces
+	printerIfaces := supportedInterfaces.GetAllInterfacesByClass(0x07)
+	if len(printerIfaces) != 1 {
+		t.Errorf("Expected 1 printer interface, got %d", len(printerIfaces))
+	}
+
+	// Test finding non-existent class
+	massStorageIfaces := supportedInterfaces.GetAllInterfacesByClass(0x08)
+	if len(massStorageIfaces) != 0 {
+		t.Errorf("Expected 0 mass storage interfaces, got %d", len(massStorageIfaces))
+	}
+}
