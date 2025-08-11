@@ -35,7 +35,7 @@ type EndpointDescriptors []*EndpointDescriptor
 
 // Direction returns the endpointDirection.
 func (end *EndpointDescriptor) Direction() EndpointDirection {
-	// FIXME(mdr): Is this funciton needed? What purpose does it serve? If I'm
+	// FIXME(mdr): Is this function needed? What purpose does it serve? If I'm
 	// keeping it, I should not return an unexported type.
 	return end.EndpointAddress.direction()
 }
@@ -48,7 +48,7 @@ func (end *EndpointDescriptor) Number() byte {
 
 // TransferType returns the transfer type for an endpoint.
 func (end *EndpointDescriptor) TransferType() TransferType {
-	// FIXME(mdr): Is this funciton needed? What purpose does it serve? If I'm
+	// FIXME(mdr): Is this function needed? What purpose does it serve? If I'm
 	// keeping it, I should not return an unexported type.
 	return end.Attributes.transferType()
 }

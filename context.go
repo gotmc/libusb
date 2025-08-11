@@ -105,6 +105,8 @@ func (ctx *Context) DeviceList() ([]*Device, error) {
 	// }
 
 	for _, thisLibusbDevice := range libusbDevices {
+		// Increment reference count to keep device valid after list is freed
+		C.libusb_ref_device(thisLibusbDevice)
 		thisDevice := Device{
 			libusbDevice: thisLibusbDevice,
 		}

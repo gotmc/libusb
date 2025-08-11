@@ -7,11 +7,14 @@ package libusb
 
 import (
 	"fmt"
+	"log"
 	"testing"
 )
 
 func ExampleErrorCode_Error() {
-	SetLocale("en")
+	if err := SetLocale("en"); err != 0 {
+		log.Fatalf("error setting locale: %s", err)
+	}
 	fmt.Println(success.Error())
 	fmt.Println(errorIo.Error())
 	fmt.Println(errorInvalidParam.Error())

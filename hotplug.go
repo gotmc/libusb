@@ -74,7 +74,8 @@ func (s *HotplugCallbackStorage) isEmpty() bool {
 }
 
 // HotplugRegisterCallbackEvent ...
-func (ctx *Context) HotplugRegisterCallbackEvent(vendorID, productID uint16, eventType HotPlugEventType, cb HotPlugCbFunc) error {
+func (ctx *Context) HotplugRegisterCallbackEvent(vendorID, productID uint16,
+	eventType HotPlugEventType, cb HotPlugCbFunc) error {
 	if hotplugCallbackStorage.isEmpty() {
 		ctx.newHotPlugHandler()
 	}
@@ -161,8 +162,13 @@ func (ctx *Context) HotplugDeregisterAllCallbacks() error {
 	mapExists := hotplugCallbackStorage.callbackMap != nil
 
 	if mapExists {
-		// Make a copy of the handlers to avoid holding the lock during C function calls
-		handlers := make([]*C.libusb_hotplug_callback_handle, 0, len(hotplugCallbackStorage.callbackMap))
+		// Make a copy of the handlers to avoid holding the lock during C function
+		// calls
+		handlers := make(
+			[]*C.libusb_hotplug_callback_handle,
+			0,
+			len(hotplugCallbackStorage.callbackMap),
+		)
 		for _, cb := range hotplugCallbackStorage.callbackMap {
 			handlers = append(handlers, cb.handler)
 		}
@@ -211,7 +217,8 @@ func (storage *HotplugCallbackStorage) handleEvents(libCtx *C.libusb_context) {
 }
 
 //export libusbHotplugCallback
-func libusbHotplugCallback(ctx *C.libusb_context, dev *C.libusb_device, event C.libusb_hotplug_event, p unsafe.Pointer) C.int {
+func libusbHotplugCallback(ctx *C.libusb_context, dev *C.libusb_device,
+	event C.libusb_hotplug_event, p unsafe.Pointer) C.int {
 	var desc C.libusb_device_descriptor_struct
 	rc := C.libusb_get_device_descriptor(dev, &desc)
 	if rc != C.LIBUSB_SUCCESS {

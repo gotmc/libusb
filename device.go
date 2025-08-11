@@ -13,12 +13,20 @@ import (
 	"unsafe"
 )
 
-// TODO(mdr): Do I need to be handling the reference counts in cgo?
-
 // Device represents a USB device including the opaque libusb_device struct.
 type Device struct {
 	libusbDevice        *C.libusb_device
 	ActiveConfiguration *ConfigDescriptor
+}
+
+// Close decrements the reference count of the device. If the decrement
+// operation causes the reference count to reach zero, the device shall be
+// destroyed.
+func (dev *Device) Close() {
+	if dev.libusbDevice != nil {
+		C.libusb_unref_device(dev.libusbDevice)
+		dev.libusbDevice = nil
+	}
 }
 
 // Descriptor represents a USB device descriptor as a Go struct.
