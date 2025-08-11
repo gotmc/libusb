@@ -18,10 +18,14 @@ func (dh *DeviceHandle) BulkTransfer(
 	timeout int,
 ) (int, error) {
 	var transferred C.int
+	var dataPtr *C.uchar
+	if len(data) > 0 {
+		dataPtr = (*C.uchar)(unsafe.Pointer(&data[0]))
+	}
 	err := C.libusb_bulk_transfer(
 		dh.libusbDeviceHandle,
 		C.uchar(endpoint),
-		(*C.uchar)(unsafe.Pointer(&data[0])),
+		dataPtr,
 		C.int(length),
 		&transferred,
 		C.uint(timeout),
@@ -80,13 +84,17 @@ func (dh *DeviceHandle) ControlTransfer(
 		return 0, ErrorCode(errorInvalidParam)
 	}
 
+	var dataPtr *C.uchar
+	if len(data) > 0 {
+		dataPtr = (*C.uchar)(unsafe.Pointer(&data[0]))
+	}
 	ret := C.libusb_control_transfer(
 		dh.libusbDeviceHandle,
 		C.uint8_t(requestType),
 		C.uint8_t(request),
 		C.uint16_t(value),
 		C.uint16_t(index),
-		(*C.uchar)(unsafe.Pointer(&data[0])),
+		dataPtr,
 		C.uint16_t(length),
 		C.uint(timeout),
 	)
@@ -177,10 +185,14 @@ func (dh *DeviceHandle) InterruptTransfer(
 	timeout int,
 ) (int, error) {
 	var transferred C.int
+	var dataPtr *C.uchar
+	if len(data) > 0 {
+		dataPtr = (*C.uchar)(unsafe.Pointer(&data[0]))
+	}
 	err := C.libusb_interrupt_transfer(
 		dh.libusbDeviceHandle,
 		C.uchar(endpoint),
-		(*C.uchar)(unsafe.Pointer(&data[0])),
+		dataPtr,
 		C.int(length),
 		&transferred,
 		C.uint(timeout),

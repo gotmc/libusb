@@ -7,6 +7,7 @@ package libusb
 
 // #cgo pkg-config: libusb-1.0
 // #include <libusb.h>
+// #include <stdlib.h>
 // static inline const char* libusb_strerror_wrapper (int code) {
 // 	return libusb_strerror(code);
 // }
@@ -14,6 +15,7 @@ import "C"
 import (
 	"fmt"
 	"math"
+	"unsafe"
 )
 
 // ErrorCode is the type for the libusb_error C enum.
@@ -42,7 +44,9 @@ func StrError(err ErrorCode) string {
 // SetLocale sets the locale for libusb errors.
 func SetLocale(locale string) ErrorCode {
 	// Explicitly convert to ensure type compatibility
-	return ErrorCode(int(C.libusb_setlocale(C.CString(locale))))
+	cLocale := C.CString(locale)
+	defer C.free(unsafe.Pointer(cLocale))
+	return ErrorCode(int(C.libusb_setlocale(cLocale)))
 }
 
 // CPUtoLE16 converts "a 16-bit value from host-endian to little-endian format.

@@ -30,11 +30,16 @@ func (dh *DeviceHandle) StringDescriptor(
 	length := 512
 	cData := make([]C.uchar, length)
 
+	var dataPtr *C.uchar
+	if len(cData) > 0 {
+		dataPtr = &cData[0]
+	}
+
 	usberr := C.libusb_get_string_descriptor(
 		dh.libusbDeviceHandle,
 		C.uint8_t(descIndex),
 		C.uint16_t(langID),
-		&cData[0],
+		dataPtr,
 		C.int(length),
 	)
 	if usberr < 0 {
@@ -42,8 +47,11 @@ func (dh *DeviceHandle) StringDescriptor(
 	}
 
 	// Convert to Go string
-	data := (*C.char)(unsafe.Pointer(&cData[0]))
-	return C.GoString(data), nil
+	if len(cData) > 0 {
+		data := (*C.char)(unsafe.Pointer(&cData[0]))
+		return C.GoString(data), nil
+	}
+	return "", nil
 }
 
 // StringDescriptorASCII retrieve(s) a string descriptor in C style ASCII.
@@ -59,11 +67,15 @@ func (dh *DeviceHandle) StringDescriptorASCII(
 	// TODO(mdr): Should the length be a constant? Why did I pick 256 bytes?
 	length := 256
 	data := make([]byte, length)
+	var dataPtr *C.uchar
+	if len(data) > 0 {
+		dataPtr = (*C.uchar)(unsafe.Pointer(&data[0]))
+	}
 	bytesRead, err := C.libusb_get_string_descriptor_ascii(
 		dh.libusbDeviceHandle,
 		C.uint8_t(descIndex),
 		// Unsafe pointer -> https://stackoverflow.com/a/16376039/95592
-		(*C.uchar)(unsafe.Pointer(&data[0])),
+		dataPtr,
 		C.int(length),
 	)
 
@@ -83,6 +95,7 @@ func (dh *DeviceHandle) Close() error {
 		return ErrorCode(errorInvalidParam)
 	}
 	C.libusb_close(dh.libusbDeviceHandle)
+	dh.libusbDeviceHandle = nil
 	return nil
 }
 
