@@ -26,7 +26,7 @@ type msgID uint8
 func showVersion() {
 	version := libusb.Version()
 	fmt.Printf(
-		"Using libusb version %d.%d.%d (%d)\n",
+		"Using C libusb version %d.%d.%d (%d)\n",
 		version.Major,
 		version.Minor,
 		version.Micro,
@@ -68,8 +68,8 @@ func main() {
 			usbDeviceDescriptor.SerialNumberIndex,
 		)
 	}
-	showInfo(ctx, "Agilent U2751A", 2391, 15640)
-	// showInfo(ctx, "Agilent 33220A", 2391, 1031)
+	showInfo(ctx, "Agilent 33220A", 2391, 1031)
+	// showInfo(ctx, "Agilent U2751A", 2391, 15640)
 	// showInfo(ctx, "Nike SportWatch", 4524, 21588)
 	// showInfo(ctx, "Nike FuelBand", 4524, 25957)
 
@@ -78,19 +78,41 @@ func main() {
 func showInfo(ctx *libusb.Context, name string, vendorID, productID uint16) {
 	fmt.Printf("Let's open the %s using the Vendor and Product IDs\n", name)
 	usbDevice, usbDeviceHandle, err := ctx.OpenDeviceWithVendorProduct(vendorID, productID)
-	usbDeviceDescriptor, _ := usbDevice.DeviceDescriptor()
 	if err != nil {
-		fmt.Printf("=> Failed opening the %s: %v\n", name, err)
+		fmt.Printf(
+			"=> Failed opening the %s (VID:0x%04x PID:0x%04x): %v\n",
+			name,
+			vendorID,
+			productID,
+			err,
+		)
+		return
+	}
+	usbDeviceDescriptor, err := usbDevice.DeviceDescriptor()
+	if err != nil {
+		fmt.Printf("=> Failed getting device descriptor for %s: %v\n", name, err)
+		usbDeviceHandle.Close()
 		return
 	}
 	defer usbDeviceHandle.Close()
-	serialnum, _ := usbDeviceHandle.StringDescriptorASCII(
-		usbDeviceDescriptor.SerialNumberIndex,
+
+	// Get string descriptors with proper error handling
+	serialnum, err := usbDeviceHandle.StringDescriptorASCII(usbDeviceDescriptor.SerialNumberIndex)
+	if err != nil {
+		serialnum = "<unavailable>"
+	}
+
+	manufacturer, err := usbDeviceHandle.StringDescriptorASCII(
+		usbDeviceDescriptor.ManufacturerIndex,
 	)
-	manufacturer, _ := usbDeviceHandle.StringDescriptorASCII(
-		usbDeviceDescriptor.ManufacturerIndex)
-	product, _ := usbDeviceHandle.StringDescriptorASCII(
-		usbDeviceDescriptor.ProductIndex)
+	if err != nil {
+		manufacturer = "<unavailable>"
+	}
+
+	product, err := usbDeviceHandle.StringDescriptorASCII(usbDeviceDescriptor.ProductIndex)
+	if err != nil {
+		product = "<unavailable>"
+	}
 	fmt.Printf("Found %v %v S/N %s using Vendor ID %v and Product ID %v\n",
 		manufacturer,
 		product,
@@ -100,21 +122,35 @@ func showInfo(ctx *libusb.Context, name string, vendorID, productID uint16) {
 	)
 	configDescriptor, err := usbDevice.ActiveConfigDescriptor()
 	if err != nil {
-		log.Fatalf("Failed getting the active config: %v", err)
+		fmt.Printf("=> Failed getting the active config for %s: %v\n", name, err)
+		return
 	}
-	fmt.Printf("=> Max Power = %d mA\n",
-		configDescriptor.MaxPowerMilliAmperes)
+	fmt.Printf("=> Max Power = %d mA\n", configDescriptor.MaxPowerMilliAmperes)
+
 	var singularPlural string
 	if configDescriptor.NumInterfaces == 1 {
 		singularPlural = "interface"
 	} else {
 		singularPlural = "interfaces"
 	}
-	fmt.Printf("=> Found %d %s\n",
-		configDescriptor.NumInterfaces, singularPlural)
-	fmt.Printf("=> The first interface has %d alternate settings.\n",
-		configDescriptor.SupportedInterfaces[0].NumAltSettings)
-	firstDescriptor := configDescriptor.SupportedInterfaces[0].InterfaceDescriptors[0]
+	fmt.Printf("=> Found %d %s\n", configDescriptor.NumInterfaces, singularPlural)
+
+	// Check if we have interfaces before accessing them
+	if len(configDescriptor.SupportedInterfaces) == 0 {
+		fmt.Printf("=> No supported interfaces found for %s\n", name)
+		return
+	}
+
+	firstInterface := configDescriptor.SupportedInterfaces[0]
+	fmt.Printf("=> The first interface has %d alternate settings.\n", firstInterface.NumAltSettings)
+
+	// Check if we have interface descriptors before accessing them
+	if len(firstInterface.InterfaceDescriptors) == 0 {
+		fmt.Printf("=> No interface descriptors found for %s\n", name)
+		return
+	}
+
+	firstDescriptor := firstInterface.InterfaceDescriptors[0]
 	fmt.Printf("=> The first interface descriptor has a length of %d.\n", firstDescriptor.Length)
 	fmt.Printf(
 		"=> The first interface descriptor is interface number %d.\n",
@@ -130,6 +166,13 @@ func showInfo(ctx *libusb.Context, name string, vendorID, productID uint16) {
 		firstDescriptor.InterfaceSubClass,
 		firstDescriptor.InterfaceProtocol,
 	)
+
+	// Check if we have endpoint descriptors before accessing them
+	if len(firstDescriptor.EndpointDescriptors) == 0 {
+		fmt.Printf("=> No endpoint descriptors found for %s\n", name)
+		return
+	}
+
 	for i, endpoint := range firstDescriptor.EndpointDescriptors {
 		fmt.Printf(
 			"   => Endpoint index %d on Interface %d has the following properties:\n",
@@ -169,15 +212,21 @@ func showInfo(ctx *libusb.Context, name string, vendorID, productID uint16) {
 	log.Printf("cap[15] := %b (%d)", p[15], p[15])
 
 	// Send USBTMC message to Agilent 33220A
+	if len(firstDescriptor.EndpointDescriptors) == 0 {
+		fmt.Printf("=> No endpoints available for bulk transfer on %s\n", name)
+		return
+	}
+
 	bulkOutput := firstDescriptor.EndpointDescriptors[0]
 	address := bulkOutput.EndpointAddress
 	fmt.Printf("Set frequency/amplitude on endpoint address %d\n", address)
 	data := createGotmcMessage("apply:sinusoid 2340, 0.1, 0.0")
 	transferred, err := usbDeviceHandle.BulkTransfer(address, data, len(data), 5000)
 	if err != nil {
-		log.Printf("Error on bulk transfer %s", err)
+		fmt.Printf("=> Error on bulk transfer to %s: %s\n", name, err)
+	} else {
+		fmt.Printf("Sent %d bytes to 33220A\n", transferred)
 	}
-	fmt.Printf("Sent %d bytes to 33220A\n", transferred)
 	err = usbDeviceHandle.ReleaseInterface(0)
 	if err != nil {
 		log.Printf("Error releasing interface %s", err)

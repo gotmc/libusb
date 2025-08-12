@@ -1,0 +1,58 @@
+# -*- Justfile -*-
+
+app_name := "key33220"
+
+# List the available justfile recipes.
+[group('general')]
+@default:
+  just --list --unsorted
+
+# List the lines of code in the project.
+[group('general')]
+loc:
+  scc --remap-unknown "-*- Justfile -*-":"justfile"
+
+# Format and vet Go code. Runs before tests.
+[group('test')]
+check:
+	go fmt ./...
+	go vet ./...
+
+# Lint using golangci-lint
+[group('test')]
+lint:
+  golangci-lint run
+
+# Build for local operating system.
+[group('build')]
+local:
+  env go build -o {{app_name}} ./main.go
+
+# Build and run for local operating system.
+[group('build')]
+dev: local
+	./{{app_name}}
+
+# List the outdated direct dependencies (slow to run).
+[group('dependencies')]
+outdated:
+  # (requires https://github.com/psampaz/go-mod-outdated).
+  go list -u -m -json all | go-mod-outdated -update -direct
+
+# Update the given module to the latest version.
+[group('dependencies')]
+update mod:
+  go get -u {{mod}}
+  go mod tidy
+
+# Update all modules.
+[group('dependencies')]
+updateall:
+  go get -u ./...
+  go mod tidy
+
+# Run go mod tidy and verify.
+[group('dependencies')]
+tidy:
+  go mod tidy
+  go mod verify
