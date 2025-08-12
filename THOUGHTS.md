@@ -66,3 +66,7 @@ as follows:
 
 - Add bounds checking for all unsafe pointer operations
 - Fix memory leaks in C.CString usage
+- Add some unit tests for error conditions.
+- I asked if there are unsafe pointer vulnerabilities that need to be addressed.
+  Claude said no.
+- Add unit tests.
