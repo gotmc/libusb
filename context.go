@@ -107,10 +107,8 @@ func (ctx *Context) DeviceList() ([]*Device, error) {
 	for _, thisLibusbDevice := range libusbDevices {
 		// Increment reference count to keep device valid after list is freed
 		C.libusb_ref_device(thisLibusbDevice)
-		thisDevice := Device{
-			libusbDevice: thisLibusbDevice,
-		}
-		devices = append(devices, &thisDevice)
+		thisDevice := newDevice(thisLibusbDevice)
+		devices = append(devices, thisDevice)
 	}
 	return devices, nil
 }
@@ -121,17 +119,18 @@ func (ctx *Context) OpenDeviceWithVendorProduct(
 	vendorID uint16,
 	productID uint16,
 ) (*Device, *DeviceHandle, error) {
-	var deviceHandle DeviceHandle
-	deviceHandle.libusbDeviceHandle = C.libusb_open_device_with_vid_pid(
+	libusbDeviceHandle := C.libusb_open_device_with_vid_pid(
 		ctx.libusbContext, C.uint16_t(vendorID), C.uint16_t(productID))
-	if deviceHandle.libusbDeviceHandle == nil {
+	if libusbDeviceHandle == nil {
 		return nil, nil, fmt.Errorf("could not open USB device %v:%v",
 			vendorID,
 			productID,
 		)
 	}
-	device := Device{
-		libusbDevice: C.libusb_get_device(deviceHandle.libusbDeviceHandle),
-	}
-	return &device, &deviceHandle, nil
+	deviceHandle := newDeviceHandle(libusbDeviceHandle)
+	libusbDevice := C.libusb_get_device(libusbDeviceHandle)
+	device := newDevice(libusbDevice)
+	// Need to increment reference count since we're creating a new Device object
+	C.libusb_ref_device(libusbDevice)
+	return device, deviceHandle, nil
 }

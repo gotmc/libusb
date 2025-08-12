@@ -9,12 +9,31 @@ package libusb
 // #include <libusb.h>
 import "C"
 import (
+	"runtime"
 	"unsafe"
 )
 
 // DeviceHandle represents the libusb device handle.
 type DeviceHandle struct {
 	libusbDeviceHandle *C.libusb_device_handle
+}
+
+// deviceHandleFinalizer is called by the garbage collector to clean up
+// unreferenced DeviceHandle objects that weren't explicitly closed.
+func deviceHandleFinalizer(dh *DeviceHandle) {
+	if dh.libusbDeviceHandle != nil {
+		C.libusb_close(dh.libusbDeviceHandle)
+		dh.libusbDeviceHandle = nil
+	}
+}
+
+// newDeviceHandle creates a new DeviceHandle with proper finalizer setup.
+func newDeviceHandle(libusbDeviceHandle *C.libusb_device_handle) *DeviceHandle {
+	dh := &DeviceHandle{
+		libusbDeviceHandle: libusbDeviceHandle,
+	}
+	runtime.SetFinalizer(dh, deviceHandleFinalizer)
+	return dh
 }
 
 // StringDescriptor retrieves a descriptor from a device.
@@ -96,6 +115,8 @@ func (dh *DeviceHandle) Close() error {
 	}
 	C.libusb_close(dh.libusbDeviceHandle)
 	dh.libusbDeviceHandle = nil
+	// Clear finalizer since we've explicitly closed the device handle
+	runtime.SetFinalizer(dh, nil)
 	return nil
 }
 

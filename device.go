@@ -10,6 +10,7 @@ package libusb
 import "C"
 import (
 	"fmt"
+	"runtime"
 	"unsafe"
 )
 
@@ -19,6 +20,24 @@ type Device struct {
 	ActiveConfiguration *ConfigDescriptor
 }
 
+// deviceFinalizer is called by the garbage collector to clean up
+// unreferenced Device objects that weren't explicitly closed.
+func deviceFinalizer(dev *Device) {
+	if dev.libusbDevice != nil {
+		C.libusb_unref_device(dev.libusbDevice)
+		dev.libusbDevice = nil
+	}
+}
+
+// newDevice creates a new Device with proper finalizer setup.
+func newDevice(libusbDevice *C.libusb_device) *Device {
+	dev := &Device{
+		libusbDevice: libusbDevice,
+	}
+	runtime.SetFinalizer(dev, deviceFinalizer)
+	return dev
+}
+
 // Close decrements the reference count of the device. If the decrement
 // operation causes the reference count to reach zero, the device shall be
 // destroyed.
@@ -26,6 +45,8 @@ func (dev *Device) Close() {
 	if dev.libusbDevice != nil {
 		C.libusb_unref_device(dev.libusbDevice)
 		dev.libusbDevice = nil
+		// Clear finalizer since we've explicitly closed the device
+		runtime.SetFinalizer(dev, nil)
 	}
 }
 
@@ -120,9 +141,7 @@ func (dev *Device) Open() (*DeviceHandle, error) {
 	if err != 0 {
 		return nil, ErrorCode(err)
 	}
-	deviceHandle := &DeviceHandle{
-		libusbDeviceHandle: handle,
-	}
+	deviceHandle := newDeviceHandle(handle)
 	return deviceHandle, nil
 }
 
