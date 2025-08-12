@@ -4,7 +4,6 @@ Go bindings for the [libusb C library][libusb-c].
 
 [![GoDoc][godoc badge]][godoc link]
 [![Go Report Card][report badge]][report card]
-[![Build Status][travis image]][travis link]
 [![License Badge][license image]][LICENSE.txt]
 
 # Installation
@@ -18,7 +17,7 @@ $ go get github.com/gotmc/libusb/v2
 To use [libusb][] package, you'll need to install the [libusb C
 library][libusb-c] first.
 
-### OS X
+### macOS
 
 ```bash
 $ brew install libusb
@@ -57,15 +56,19 @@ Contributions are welcome! To contribute please:
 Prior to submitting a [pull request][], please run:
 
 ```bash
-$ make check
-$ make lint
+$ just check
+$ just lint
+$ just unit
 ```
 
 To update and view the test coverage report:
 
 ```bash
-$ make cover
+$ just cover
 ```
+
+Note: This project uses [Just][] as a command runner. To install Just, please
+see the [installation instructions][just-install].
 
 ## Alternatives
 
@@ -73,14 +76,14 @@ There are other USB Go libraries besides [libusb][]. Below are a few
 alternatives:
 
 - [google/gousb][] — Wraps the [libusb C library][libusb-c] to provde
-  Go-bindings. This library supersedes [kylelemons/gousb][], which is not
-  archived. Apachage-2.0 license.
+  Go-bindings. This library supersedes [kylelemons/gousb][], which was archived
+  in August 2020. Apache-2.0 license.
 - [karalabe/usb][] — Does not require the [libusb C library][libusb-c] to be
   installed. Written in C to be a cross platform, fully self-contained library
   for accessing and communicating with USB devices either via HID or low level
   interrupts. LGPL-3.0 license.
 - [deadsy/libusb][] — Wraps the [libusb C library][libusb-c]. MIT license. As of
-  05-Apr-24, this package hasn't been updated in six years.
+  12-Aug-25, this package hasn't been updated in seven years.
 
 ## License
 
@@ -91,6 +94,8 @@ alternatives:
 [godoc badge]: https://godoc.org/github.com/gotmc/libusb?status.svg
 [godoc link]: https://godoc.org/github.com/gotmc/libusb
 [google/gousb]: https://github.com/google/gousb
+[Just]: https://github.com/casey/just
+[just-install]: https://github.com/casey/just#installation
 [karalabe/usb]: https://github.com/karalabe/usb
 [kylelemons/gousb]: https://github.com/kylelemons/gousb
 [libusb]: https://github.com/gotmc/libusb
@@ -100,5 +105,3 @@ alternatives:
 [pull request]: https://help.github.com/articles/using-pull-requests
 [report badge]: https://goreportcard.com/badge/github.com/gotmc/libusb
 [report card]: https://goreportcard.com/report/github.com/gotmc/libusb
-[travis image]: http://img.shields.io/travis/gotmc/libusb/master.svg
-[travis link]: https://travis-ci.org/gotmc/libusb
