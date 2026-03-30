@@ -58,8 +58,9 @@ type hotplugCallback struct {
 	fn      HotPlugCbFunc
 }
 
-// hotplugStorage holds the callback map and done channel for a single context.
-type hotplugStorage struct {
+// HotplugCallbackStorage holds the callback map and done channel for a single
+// context.
+type HotplugCallbackStorage struct {
 	callbackMap map[uint32]hotplugCallback
 	done        chan struct{}
 	mu          sync.RWMutex
@@ -73,20 +74,20 @@ const hotplugEventTimeoutMs = 200
 // hotplugRegistry maps context pointers to their hotplug storage, allowing
 // multiple contexts to register hotplug callbacks independently.
 var (
-	hotplugRegistry   = make(map[*C.libusb_context]*hotplugStorage)
+	hotplugRegistry   = make(map[*C.libusb_context]*HotplugCallbackStorage)
 	hotplugRegistryMu sync.RWMutex
 )
 
 func getHotplugStorage(
 	libCtx *C.libusb_context,
-) *hotplugStorage {
+) *HotplugCallbackStorage {
 	hotplugRegistryMu.RLock()
 	defer hotplugRegistryMu.RUnlock()
 	return hotplugRegistry[libCtx]
 }
 
-func (ctx *Context) newHotPlugHandler() *hotplugStorage {
-	storage := &hotplugStorage{
+func (ctx *Context) newHotPlugHandler() *HotplugCallbackStorage {
+	storage := &HotplugCallbackStorage{
 		callbackMap: make(map[uint32]hotplugCallback),
 		done:        make(chan struct{}),
 	}
@@ -99,7 +100,7 @@ func (ctx *Context) newHotPlugHandler() *hotplugStorage {
 	return storage
 }
 
-func (ctx *Context) getOrCreateHotplugStorage() *hotplugStorage {
+func (ctx *Context) getOrCreateHotplugStorage() *HotplugCallbackStorage {
 	storage := getHotplugStorage(ctx.libusbContext)
 	if storage == nil {
 		storage = ctx.newHotPlugHandler()
@@ -253,7 +254,7 @@ func (ctx *Context) hotplugHandleEventsCompleteAll() {
 	removeHotplugStorage(ctx.libusbContext)
 }
 
-func (storage *hotplugStorage) handleEvents(
+func (storage *HotplugCallbackStorage) handleEvents(
 	libCtx *C.libusb_context,
 ) {
 	for {
