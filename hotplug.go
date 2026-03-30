@@ -7,6 +7,7 @@ package libusb
 
 // #cgo pkg-config: libusb-1.0
 // #include <libusb.h>
+// #include <sys/time.h>
 // int libusbHotplugCallback (libusb_context *ctx, libusb_device *device, libusb_hotplug_event event, void *user_data);
 // typedef struct libusb_device_descriptor libusb_device_descriptor_struct;
 // static int libusb_hotplug_register_callback_wrapper (
@@ -18,6 +19,12 @@ package libusb
 //	{
 // 		return libusb_hotplug_register_callback(ctx, events, flags, vendor_id, product_id, dev_class, cb_fn, user_data, callback_handle);
 // }
+// static int libusb_handle_events_timeout_ms(libusb_context *ctx, int timeout_ms) {
+//	struct timeval tv;
+//	tv.tv_sec = timeout_ms / 1000;
+//	tv.tv_usec = (timeout_ms % 1000) * 1000;
+//	return libusb_handle_events_timeout_completed(ctx, &tv, NULL);
+// }
 import "C"
 import (
 	"fmt"
@@ -26,10 +33,10 @@ import (
 	"unsafe"
 )
 
-// HotPlugEventType ...
+// HotPlugEventType represents the type of hotplug event.
 type HotPlugEventType uint8
 
-// HotPlugCbFunc callback
+// HotPlugCbFunc is the callback function signature for hotplug events.
 type HotPlugCbFunc func(vID, pID uint16, eventType HotPlugEventType)
 
 // HotPlug Event Types
@@ -51,34 +58,68 @@ type hotplugCallback struct {
 	fn      HotPlugCbFunc
 }
 
-// HotplugCallbackStorage ...
-type HotplugCallbackStorage struct {
+// hotplugStorage holds the callback map and done channel for a single context.
+type hotplugStorage struct {
 	callbackMap map[uint32]hotplugCallback
 	done        chan struct{}
-	mu          sync.RWMutex // Protects the callbackMap from concurrent access
+	mu          sync.RWMutex
 }
 
-var hotplugCallbackStorage HotplugCallbackStorage
+// hotplugEventTimeoutMs is the timeout in milliseconds for
+// libusb_handle_events_timeout_completed in the event loop. This prevents
+// busy-spinning while still being responsive to the done signal.
+const hotplugEventTimeoutMs = 200
 
-func (ctx *Context) newHotPlugHandler() {
-	hotplugCallbackStorage.callbackMap = make(map[uint32]hotplugCallback)
-	hotplugCallbackStorage.done = make(chan struct{})
+// hotplugRegistry maps context pointers to their hotplug storage, allowing
+// multiple contexts to register hotplug callbacks independently.
+var (
+	hotplugRegistry   = make(map[*C.libusb_context]*hotplugStorage)
+	hotplugRegistryMu sync.RWMutex
+)
 
-	go hotplugCallbackStorage.handleEvents(ctx.libusbContext)
+func getHotplugStorage(
+	libCtx *C.libusb_context,
+) *hotplugStorage {
+	hotplugRegistryMu.RLock()
+	defer hotplugRegistryMu.RUnlock()
+	return hotplugRegistry[libCtx]
 }
 
-func (s *HotplugCallbackStorage) isEmpty() bool {
-	s.mu.RLock()
-	defer s.mu.RUnlock()
-	return s.callbackMap == nil
-}
-
-// HotplugRegisterCallbackEvent ...
-func (ctx *Context) HotplugRegisterCallbackEvent(vendorID, productID uint16,
-	eventType HotPlugEventType, cb HotPlugCbFunc) error {
-	if hotplugCallbackStorage.isEmpty() {
-		ctx.newHotPlugHandler()
+func (ctx *Context) newHotPlugHandler() *hotplugStorage {
+	storage := &hotplugStorage{
+		callbackMap: make(map[uint32]hotplugCallback),
+		done:        make(chan struct{}),
 	}
+
+	hotplugRegistryMu.Lock()
+	hotplugRegistry[ctx.libusbContext] = storage
+	hotplugRegistryMu.Unlock()
+
+	go storage.handleEvents(ctx.libusbContext)
+	return storage
+}
+
+func (ctx *Context) getOrCreateHotplugStorage() *hotplugStorage {
+	storage := getHotplugStorage(ctx.libusbContext)
+	if storage == nil {
+		storage = ctx.newHotPlugHandler()
+	}
+	return storage
+}
+
+func removeHotplugStorage(libCtx *C.libusb_context) {
+	hotplugRegistryMu.Lock()
+	delete(hotplugRegistry, libCtx)
+	hotplugRegistryMu.Unlock()
+}
+
+// HotplugRegisterCallbackEvent registers a hotplug callback for the given
+// vendor/product ID pair and event type.
+func (ctx *Context) HotplugRegisterCallbackEvent(
+	vendorID, productID uint16,
+	eventType HotPlugEventType, cb HotPlugCbFunc,
+) error {
+	storage := ctx.getOrCreateHotplugStorage()
 
 	var event C.int
 	switch eventType {
@@ -87,7 +128,8 @@ func (ctx *Context) HotplugRegisterCallbackEvent(vendorID, productID uint16,
 	case HotplugLeft:
 		event = C.LIBUSB_HOTPLUG_EVENT_DEVICE_LEFT
 	default:
-		event = C.LIBUSB_HOTPLUG_EVENT_DEVICE_ARRIVED | C.LIBUSB_HOTPLUG_EVENT_DEVICE_LEFT
+		event = C.LIBUSB_HOTPLUG_EVENT_DEVICE_ARRIVED |
+			C.LIBUSB_HOTPLUG_EVENT_DEVICE_LEFT
 	}
 
 	var vID C.int = C.LIBUSB_HOTPLUG_MATCH_ANY
@@ -109,35 +151,44 @@ func (ctx *Context) HotplugRegisterCallbackEvent(vendorID, productID uint16,
 		vID,
 		pID,
 		C.LIBUSB_HOTPLUG_MATCH_ANY,
-		C.libusb_hotplug_callback_fn(unsafe.Pointer(C.libusbHotplugCallback)),
+		C.libusb_hotplug_callback_fn(
+			unsafe.Pointer(C.libusbHotplugCallback),
+		),
 		nil,
 		&cbHandle,
 	)
 	if rc != C.LIBUSB_SUCCESS {
-		return fmt.Errorf("libusb_hotplug_register_callback error: %s", ErrorCode(rc))
+		return fmt.Errorf(
+			"libusb_hotplug_register_callback error: %s", ErrorCode(rc),
+		)
 	}
 
-	hotplugCallbackStorage.mu.Lock()
-	hotplugCallbackStorage.callbackMap[vidPidToUint32(vendorID, productID)] = hotplugCallback{
+	key := vidPidToUint32(vendorID, productID)
+	storage.mu.Lock()
+	storage.callbackMap[key] = hotplugCallback{
 		handler: &cbHandle,
 		fn:      cb,
 	}
-	hotplugCallbackStorage.mu.Unlock()
+	storage.mu.Unlock()
 
 	return nil
 }
 
-// HotplugDeregisterCallback ...
-func (ctx *Context) HotplugDeregisterCallback(vendorID, productID uint16) error {
-	if hotplugCallbackStorage.isEmpty() {
+// HotplugDeregisterCallback deregisters a hotplug callback for the given
+// vendor/product ID pair.
+func (ctx *Context) HotplugDeregisterCallback(
+	vendorID, productID uint16,
+) error {
+	storage := getHotplugStorage(ctx.libusbContext)
+	if storage == nil {
 		return nil
 	}
 
 	key := vidPidToUint32(vendorID, productID)
 
-	hotplugCallbackStorage.mu.RLock()
-	cb, ok := hotplugCallbackStorage.callbackMap[key]
-	hotplugCallbackStorage.mu.RUnlock()
+	storage.mu.RLock()
+	cb, ok := storage.callbackMap[key]
+	storage.mu.RUnlock()
 
 	if !ok {
 		return nil
@@ -145,10 +196,10 @@ func (ctx *Context) HotplugDeregisterCallback(vendorID, productID uint16) error 
 
 	C.libusb_hotplug_deregister_callback(ctx.libusbContext, *cb.handler)
 
-	hotplugCallbackStorage.mu.Lock()
-	delete(hotplugCallbackStorage.callbackMap, key)
-	mapEmpty := len(hotplugCallbackStorage.callbackMap) == 0
-	hotplugCallbackStorage.mu.Unlock()
+	storage.mu.Lock()
+	delete(storage.callbackMap, key)
+	mapEmpty := len(storage.callbackMap) == 0
+	storage.mu.Unlock()
 
 	if mapEmpty {
 		ctx.hotplugHandleEventsCompleteAll()
@@ -156,30 +207,27 @@ func (ctx *Context) HotplugDeregisterCallback(vendorID, productID uint16) error 
 	return nil
 }
 
-// HotplugDeregisterAllCallbacks ...
+// HotplugDeregisterAllCallbacks deregisters all hotplug callbacks for this
+// context and stops the event handler goroutine.
 func (ctx *Context) HotplugDeregisterAllCallbacks() error {
-	hotplugCallbackStorage.mu.RLock()
-	mapExists := hotplugCallbackStorage.callbackMap != nil
+	storage := getHotplugStorage(ctx.libusbContext)
+	if storage == nil {
+		return nil
+	}
 
-	if mapExists {
-		// Make a copy of the handlers to avoid holding the lock during C function
-		// calls
-		handlers := make(
-			[]*C.libusb_hotplug_callback_handle,
-			0,
-			len(hotplugCallbackStorage.callbackMap),
-		)
-		for _, cb := range hotplugCallbackStorage.callbackMap {
-			handlers = append(handlers, cb.handler)
-		}
-		hotplugCallbackStorage.mu.RUnlock()
+	storage.mu.RLock()
+	handlers := make(
+		[]*C.libusb_hotplug_callback_handle,
+		0,
+		len(storage.callbackMap),
+	)
+	for _, cb := range storage.callbackMap {
+		handlers = append(handlers, cb.handler)
+	}
+	storage.mu.RUnlock()
 
-		// Deregister callbacks without holding the lock
-		for _, handler := range handlers {
-			C.libusb_hotplug_deregister_callback(ctx.libusbContext, *handler)
-		}
-	} else {
-		hotplugCallbackStorage.mu.RUnlock()
+	for _, handler := range handlers {
+		C.libusb_hotplug_deregister_callback(ctx.libusbContext, *handler)
 	}
 
 	ctx.hotplugHandleEventsCompleteAll()
@@ -188,31 +236,38 @@ func (ctx *Context) HotplugDeregisterAllCallbacks() error {
 }
 
 func (ctx *Context) hotplugHandleEventsCompleteAll() {
-	if hotplugCallbackStorage.isEmpty() {
+	storage := getHotplugStorage(ctx.libusbContext)
+	if storage == nil {
 		return
 	}
 
-	// Signal the event handler to stop
-	hotplugCallbackStorage.done <- struct{}{}
+	// Signal the event handler goroutine to stop. Closing the channel
+	// unblocks all receivers immediately without needing a separate send.
+	close(storage.done)
 
-	// Clear the callbackMap and close the channel
-	hotplugCallbackStorage.mu.Lock()
-	hotplugCallbackStorage.callbackMap = nil
-	hotplugCallbackStorage.mu.Unlock()
+	// Clean up the storage for this context.
+	storage.mu.Lock()
+	storage.callbackMap = nil
+	storage.mu.Unlock()
 
-	close(hotplugCallbackStorage.done)
+	removeHotplugStorage(ctx.libusbContext)
 }
 
-func (storage *HotplugCallbackStorage) handleEvents(libCtx *C.libusb_context) {
+func (storage *hotplugStorage) handleEvents(
+	libCtx *C.libusb_context,
+) {
 	for {
 		select {
 		case <-storage.done:
 			return
 		default:
 		}
-		if errno := C.libusb_handle_events_completed(libCtx, nil); errno < 0 {
+		errno := C.libusb_handle_events_timeout_ms(
+			libCtx, C.int(hotplugEventTimeoutMs),
+		)
+		if errno < 0 {
 			if ErrorCode(errno) == errorInterrupted {
-				continue // ignore harmless EINTR
+				continue
 			}
 			log.Printf("handle_events error: %s", ErrorCode(errno))
 		}
@@ -220,16 +275,18 @@ func (storage *HotplugCallbackStorage) handleEvents(libCtx *C.libusb_context) {
 }
 
 //export libusbHotplugCallback
-func libusbHotplugCallback(ctx *C.libusb_context, dev *C.libusb_device,
-	event C.libusb_hotplug_event, p unsafe.Pointer) C.int {
+func libusbHotplugCallback(
+	ctx *C.libusb_context, dev *C.libusb_device,
+	event C.libusb_hotplug_event, p unsafe.Pointer,
+) C.int {
 	var desc C.libusb_device_descriptor_struct
 	rc := C.libusb_get_device_descriptor(dev, &desc)
 	if rc != C.LIBUSB_SUCCESS {
 		return rc
 	}
 
-	var vendorID = uint16(desc.idVendor)
-	var productID = uint16(desc.idProduct)
+	vendorID := uint16(desc.idVendor)
+	productID := uint16(desc.idProduct)
 
 	var e HotPlugEventType
 	switch event {
@@ -241,28 +298,27 @@ func libusbHotplugCallback(ctx *C.libusb_context, dev *C.libusb_device,
 		e = HotplugUndefined
 	}
 
-	// Read callback map with a read lock
-	hotplugCallbackStorage.mu.RLock()
-	// Get device-specific callback
-	cb, ok := hotplugCallbackStorage.callbackMap[vidPidToUint32(vendorID, productID)]
+	storage := getHotplugStorage(ctx)
+	if storage == nil {
+		return C.LIBUSB_SUCCESS
+	}
+
+	storage.mu.RLock()
+	cb, ok := storage.callbackMap[vidPidToUint32(vendorID, productID)]
 	var deviceCallback HotPlugCbFunc
 	if ok {
 		deviceCallback = cb.fn
 	}
-
-	// Get the callback for all devices
-	cb, ok = hotplugCallbackStorage.callbackMap[0]
+	cb, ok = storage.callbackMap[0]
 	var allCallback HotPlugCbFunc
 	if ok {
 		allCallback = cb.fn
 	}
-	hotplugCallbackStorage.mu.RUnlock()
+	storage.mu.RUnlock()
 
-	// Call callbacks outside the lock
 	if deviceCallback != nil {
 		deviceCallback(vendorID, productID, e)
 	}
-
 	if allCallback != nil {
 		allCallback(vendorID, productID, e)
 	}
