@@ -31,7 +31,10 @@ func TestConfigDescriptorStructure(t *testing.T) {
 		t.Errorf("ConfigDescriptor.NumInterfaces = %d, want 2", config.NumInterfaces)
 	}
 	if config.MaxPowerMilliAmperes != 500 {
-		t.Errorf("ConfigDescriptor.MaxPowerMilliAmperes = %d, want 500", config.MaxPowerMilliAmperes)
+		t.Errorf(
+			"ConfigDescriptor.MaxPowerMilliAmperes = %d, want 500",
+			config.MaxPowerMilliAmperes,
+		)
 	}
 }
 

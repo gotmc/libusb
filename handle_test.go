@@ -16,79 +16,117 @@ func TestDeviceHandleNilChecks(t *testing.T) {
 	// Test StringDescriptor with nil handle
 	_, err := dh.StringDescriptor(0, 0)
 	if err == nil || err != ErrorCode(errorInvalidParam) {
-		t.Errorf("StringDescriptor should return errorInvalidParam for nil handle, got %v", err)
+		t.Errorf(
+			"StringDescriptor should return errorInvalidParam for nil handle, got %v",
+			err,
+		)
 	}
 
 	// Test StringDescriptorASCII with nil handle
 	_, err = dh.StringDescriptorASCII(0)
 	if err == nil || err != ErrorCode(errorInvalidParam) {
-		t.Errorf("StringDescriptorASCII should return errorInvalidParam for nil handle, got %v", err)
+		t.Errorf(
+			"StringDescriptorASCII should return errorInvalidParam for nil handle, got %v",
+			err,
+		)
 	}
 
 	// Test Close with nil handle
 	err = dh.Close()
 	if err == nil || err != ErrorCode(errorInvalidParam) {
-		t.Errorf("Close should return errorInvalidParam for nil handle, got %v", err)
+		t.Errorf(
+			"Close should return errorInvalidParam for nil handle, got %v", err,
+		)
 	}
 
 	// Test Configuration with nil handle
 	_, err = dh.Configuration()
 	if err == nil || err != ErrorCode(errorInvalidParam) {
-		t.Errorf("Configuration should return errorInvalidParam for nil handle, got %v", err)
+		t.Errorf(
+			"Configuration should return errorInvalidParam for nil handle, got %v",
+			err,
+		)
 	}
 
 	// Test SetConfiguration with nil handle
 	err = dh.SetConfiguration(1)
 	if err == nil || err != ErrorCode(errorInvalidParam) {
-		t.Errorf("SetConfiguration should return errorInvalidParam for nil handle, got %v", err)
+		t.Errorf(
+			"SetConfiguration should return errorInvalidParam for nil handle, got %v",
+			err,
+		)
 	}
 
 	// Test ClaimInterface with nil handle
 	err = dh.ClaimInterface(0)
 	if err == nil || err != ErrorCode(errorInvalidParam) {
-		t.Errorf("ClaimInterface should return errorInvalidParam for nil handle, got %v", err)
+		t.Errorf(
+			"ClaimInterface should return errorInvalidParam for nil handle, got %v",
+			err,
+		)
 	}
 
 	// Test ReleaseInterface with nil handle
 	err = dh.ReleaseInterface(0)
 	if err == nil || err != ErrorCode(errorInvalidParam) {
-		t.Errorf("ReleaseInterface should return errorInvalidParam for nil handle, got %v", err)
+		t.Errorf(
+			"ReleaseInterface should return errorInvalidParam for nil handle, got %v",
+			err,
+		)
 	}
 
 	// Test SetInterfaceAltSetting with nil handle
 	err = dh.SetInterfaceAltSetting(0, 0)
 	if err == nil || err != ErrorCode(errorInvalidParam) {
-		t.Errorf("SetInterfaceAltSetting should return errorInvalidParam for nil handle, got %v", err)
+		t.Errorf(
+			"SetInterfaceAltSetting should return errorInvalidParam for nil handle, got %v",
+			err,
+		)
 	}
 
 	// Test ResetDevice with nil handle
 	err = dh.ResetDevice()
 	if err == nil || err != ErrorCode(errorInvalidParam) {
-		t.Errorf("ResetDevice should return errorInvalidParam for nil handle, got %v", err)
+		t.Errorf(
+			"ResetDevice should return errorInvalidParam for nil handle, got %v",
+			err,
+		)
 	}
 
 	// Test KernelDriverActive with nil handle
 	_, err = dh.KernelDriverActive(0)
 	if err == nil || err != ErrorCode(errorInvalidParam) {
-		t.Errorf("KernelDriverActive should return errorInvalidParam for nil handle, got %v", err)
+		t.Errorf(
+			"KernelDriverActive should return errorInvalidParam for nil handle, got %v",
+			err,
+		)
 	}
 
 	// Test DetachKernelDriver with nil handle
 	err = dh.DetachKernelDriver(0)
 	if err == nil || err != ErrorCode(errorInvalidParam) {
-		t.Errorf("DetachKernelDriver should return errorInvalidParam for nil handle, got %v", err)
+		t.Errorf(
+			"DetachKernelDriver should return errorInvalidParam for nil handle, got %v",
+			err,
+		)
 	}
 
 	// Test AttachKernelDriver with nil handle
 	err = dh.AttachKernelDriver(0)
 	if err == nil || err != ErrorCode(errorInvalidParam) {
-		t.Errorf("AttachKernelDriver should return errorInvalidParam for nil handle, got %v", err)
+		t.Errorf(
+			"AttachKernelDriver should return errorInvalidParam for nil handle, got %v",
+			err,
+		)
 	}
 
 	// Test SetAutoDetachKernelDriver with nil handle
 	err = dh.SetAutoDetachKernelDriver(true)
 	if err == nil || err != ErrorCode(errorInvalidParam) {
-		t.Errorf("SetAutoDetachKernelDriver should return errorInvalidParam for nil handle, got %v", err)
+		t.Errorf(
+			"SetAutoDetachKernelDriver should return errorInvalidParam for nil handle, got %v",
+			err,
+		)
 	}
 }
 
@@ -99,25 +137,37 @@ func TestDeviceHandleWithNilInternalPointer(t *testing.T) {
 	// Test StringDescriptor
 	_, err := dh.StringDescriptor(0, 0)
 	if err == nil || err != ErrorCode(errorInvalidParam) {
-		t.Errorf("StringDescriptor should return errorInvalidParam for nil internal pointer, got %v", err)
+		t.Errorf(
+			"StringDescriptor should return errorInvalidParam for nil internal pointer, got %v",
+			err,
+		)
 	}
 
 	// Test StringDescriptorASCII
 	_, err = dh.StringDescriptorASCII(0)
 	if err == nil || err != ErrorCode(errorInvalidParam) {
-		t.Errorf("StringDescriptorASCII should return errorInvalidParam for nil internal pointer, got %v", err)
+		t.Errorf(
+			"StringDescriptorASCII should return errorInvalidParam for nil internal pointer, got %v",
+			err,
+		)
 	}
 
 	// Test Close
 	err = dh.Close()
 	if err == nil || err != ErrorCode(errorInvalidParam) {
-		t.Errorf("Close should return errorInvalidParam for nil internal pointer, got %v", err)
+		t.Errorf(
+			"Close should return errorInvalidParam for nil internal pointer, got %v",
+			err,
+		)
 	}
 
 	// Test Configuration
 	_, err = dh.Configuration()
 	if err == nil || err != ErrorCode(errorInvalidParam) {
-		t.Errorf("Configuration should return errorInvalidParam for nil internal pointer, got %v", err)
+		t.Errorf(
+			"Configuration should return errorInvalidParam for nil internal pointer, got %v",
+			err,
+		)
 	}
 }
 
@@ -128,7 +178,10 @@ func TestDeviceHandleCloseIdempotent(t *testing.T) {
 	// Close should set the pointer to nil
 	err := dh.Close()
 	if err == nil || err != ErrorCode(errorInvalidParam) {
-		t.Errorf("Close should return errorInvalidParam for nil internal pointer, got %v", err)
+		t.Errorf(
+			"Close should return errorInvalidParam for nil internal pointer, got %v",
+			err,
+		)
 	}
 
 	// Verify the handle is now nil

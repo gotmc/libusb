@@ -83,7 +83,7 @@ func TestIntegrationDeviceList(t *testing.T) {
 		t.Skip("skipping integration test")
 	}
 	context, _ := NewContext()
-	defer context.Close()
+	defer func() { _ = context.Close() }()
 	devices, err := context.DeviceList()
 	if err != nil {
 		t.Errorf(

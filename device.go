@@ -182,10 +182,10 @@ func (dev *Device) DeviceDescriptor() (*Descriptor, error) {
 func (dev *Device) ActiveConfigDescriptor() (*ConfigDescriptor, error) {
 	var config *C.struct_libusb_config_descriptor
 	err := C.libusb_get_active_config_descriptor(dev.libusbDevice, &config)
-	defer C.libusb_free_config_descriptor(config)
 	if err != 0 {
 		return nil, ErrorCode(err)
 	}
+	defer C.libusb_free_config_descriptor(config)
 	activeConfiguration := &ConfigDescriptor{
 		Length:               int(config.bLength),
 		DescriptorType:       descriptorType(config.bDescriptorType),
@@ -282,10 +282,10 @@ func (dev *Device) ActiveConfigDescriptor() (*ConfigDescriptor, error) {
 func (dev *Device) ConfigDescriptor(configIndex int) (*ConfigDescriptor, error) {
 	var cConfig *C.struct_libusb_config_descriptor
 	err := C.libusb_get_config_descriptor(dev.libusbDevice, C.uint8_t(configIndex), &cConfig)
-	defer C.libusb_free_config_descriptor(cConfig)
 	if err != 0 {
 		return nil, ErrorCode(err)
 	}
+	defer C.libusb_free_config_descriptor(cConfig)
 	configuration := &ConfigDescriptor{
 		Length:               int(cConfig.bLength),
 		DescriptorType:       descriptorType(cConfig.bDescriptorType),
@@ -308,10 +308,10 @@ func (dev *Device) ConfigDescriptorByValue(configValue int) (*ConfigDescriptor, 
 	err := C.libusb_get_config_descriptor_by_value(
 		dev.libusbDevice, C.uint8_t(configValue), &cConfig,
 	)
-	defer C.libusb_free_config_descriptor(cConfig)
 	if err != 0 {
 		return nil, ErrorCode(err)
 	}
+	defer C.libusb_free_config_descriptor(cConfig)
 	configuration := &ConfigDescriptor{
 		Length:               int(cConfig.bLength),
 		DescriptorType:       descriptorType(cConfig.bDescriptorType),
@@ -364,5 +364,5 @@ func (dev *Device) FindInterfacesByClass(class uint8) (InterfaceDescriptors, err
 	if err != nil {
 		return nil, err
 	}
-	return config.SupportedInterfaces.GetAllInterfacesByClass(class), nil
+	return config.GetAllInterfacesByClass(class), nil
 }

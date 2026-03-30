@@ -17,6 +17,9 @@ func (dh *DeviceHandle) BulkTransfer(
 	length int,
 	timeout int,
 ) (int, error) {
+	if dh == nil || dh.libusbDeviceHandle == nil {
+		return 0, ErrorCode(errorInvalidParam)
+	}
 	var transferred C.int
 	var dataPtr *C.uchar
 	if len(data) > 0 {
@@ -184,6 +187,9 @@ func (dh *DeviceHandle) InterruptTransfer(
 	length int,
 	timeout int,
 ) (int, error) {
+	if dh == nil || dh.libusbDeviceHandle == nil {
+		return 0, ErrorCode(errorInvalidParam)
+	}
 	var transferred C.int
 	var dataPtr *C.uchar
 	if len(data) > 0 {

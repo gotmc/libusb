@@ -48,7 +48,10 @@ func TestTransferDirectionString(t *testing.T) {
 	for _, tc := range testCases {
 		result := tc.direction.String()
 		if result != tc.expected {
-			t.Errorf("TransferDirection(%d).String() = %q, want %q", tc.direction, result, tc.expected)
+			t.Errorf(
+				"TransferDirection(%d).String() = %q, want %q",
+				tc.direction, result, tc.expected,
+			)
 		}
 	}
 }
@@ -86,7 +89,10 @@ func TestRequestRecipientString(t *testing.T) {
 	for _, tc := range testCases {
 		result := tc.recipient.String()
 		if result != tc.expected {
-			t.Errorf("RequestRecipient(%d).String() = %q, want %q", tc.recipient, result, tc.expected)
+			t.Errorf(
+				"RequestRecipient(%d).String() = %q, want %q",
+				tc.recipient, result, tc.expected,
+			)
 		}
 	}
 }

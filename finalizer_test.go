@@ -19,7 +19,7 @@ func TestDeviceFinalizer(t *testing.T) {
 	if err != nil {
 		t.Skip("Cannot create context for finalizer test")
 	}
-	defer ctx.Close()
+	defer func() { _ = ctx.Close() }()
 
 	devices, err := ctx.DeviceList()
 	if err != nil {
@@ -58,7 +58,7 @@ func TestDeviceHandleFinalizer(t *testing.T) {
 	if err != nil {
 		t.Skip("Cannot create context for finalizer test")
 	}
-	defer ctx.Close()
+	defer func() { _ = ctx.Close() }()
 
 	devices, err := ctx.DeviceList()
 	if err != nil {
@@ -101,7 +101,7 @@ func TestExplicitCloseRemovesFinalizer(t *testing.T) {
 	if err != nil {
 		t.Skip("Cannot create context for finalizer test")
 	}
-	defer ctx.Close()
+	defer func() { _ = ctx.Close() }()
 
 	devices, err := ctx.DeviceList()
 	if err != nil {
@@ -138,7 +138,7 @@ func TestFinalizerMemoryLeakPrevention(t *testing.T) {
 	if err != nil {
 		t.Skip("Cannot create context for finalizer test")
 	}
-	defer ctx.Close()
+	defer func() { _ = ctx.Close() }()
 
 	// Create multiple rounds of devices to stress test finalizers
 	for i := 0; i < 5; i++ {

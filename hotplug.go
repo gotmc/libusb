@@ -211,9 +211,9 @@ func (storage *HotplugCallbackStorage) handleEvents(libCtx *C.libusb_context) {
 		default:
 		}
 		if errno := C.libusb_handle_events_completed(libCtx, nil); errno < 0 {
-			if ErrorCode(errno) == ErrorInterrupted {
-        		continue // ignore harmless EINTR
-    		}
+			if ErrorCode(errno) == errorInterrupted {
+				continue // ignore harmless EINTR
+			}
 			log.Printf("handle_events error: %s", ErrorCode(errno))
 		}
 	}
