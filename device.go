@@ -71,6 +71,9 @@ type Descriptor struct {
 // BusNumber gets "the number of the bus that a device is connected to."
 // (Source: libusb docs)
 func (dev *Device) BusNumber() (int, error) {
+	if dev == nil || dev.libusbDevice == nil {
+		return 0, ErrorCode(errorInvalidParam)
+	}
 	busNumber, err := C.libusb_get_bus_number(dev.libusbDevice)
 	if err != nil {
 		return 0, err
@@ -87,6 +90,9 @@ func (dev *Device) BusNumber() (int, error) {
 // remain the same, or even match the order in which ports have been numbered
 // by the HUB/HCD manufacturer." (Source: libusb docs)
 func (dev *Device) PortNumber() (int, error) {
+	if dev == nil || dev.libusbDevice == nil {
+		return 0, ErrorCode(errorInvalidParam)
+	}
 	portNumber, err := C.libusb_get_port_number(dev.libusbDevice)
 	if err != nil {
 		return 0, fmt.Errorf("port number is unavailable for device %v", dev)
@@ -102,6 +108,9 @@ func (dev *Device) PortNumber() (int, error) {
 // contents. If you're dealing with isochronous transfers, you probably want
 // libusb_get_max_iso_packet_size() instead." (Source: libusb docs)
 func (dev *Device) MaxPacketSize(ep endpointAddress) (int, error) {
+	if dev == nil || dev.libusbDevice == nil {
+		return 0, ErrorCode(errorInvalidParam)
+	}
 	maxPacketSize, err := C.libusb_get_max_packet_size(dev.libusbDevice, C.uchar(ep))
 	if err != nil {
 		return 0, fmt.Errorf("wMaxPacketSize is unavailable for device %v", dev)
@@ -112,6 +121,9 @@ func (dev *Device) MaxPacketSize(ep endpointAddress) (int, error) {
 // DeviceAddress gets "the address of the device on the bus it is connected
 // to." (Source: libusb docs)
 func (dev *Device) DeviceAddress() (int, error) {
+	if dev == nil || dev.libusbDevice == nil {
+		return 0, ErrorCode(errorInvalidParam)
+	}
 	deviceAddress, err := C.libusb_get_device_address(dev.libusbDevice)
 	if err != nil {
 		return 0, err
@@ -122,6 +134,9 @@ func (dev *Device) DeviceAddress() (int, error) {
 // Speed gets "the negotiated connection speed for a device." (Source:
 // libusb docs)
 func (dev *Device) Speed() (SpeedType, error) {
+	if dev == nil || dev.libusbDevice == nil {
+		return 0, ErrorCode(errorInvalidParam)
+	}
 	deviceSpeed, err := C.libusb_get_device_speed(dev.libusbDevice)
 	if err != nil {
 		return 0, err
@@ -136,6 +151,9 @@ func (dev *Device) Speed() (SpeedType, error) {
 // is a non-blocking function; no requests are sent over the bus. (Source:
 // libusb docs)
 func (dev *Device) Open() (*DeviceHandle, error) {
+	if dev == nil || dev.libusbDevice == nil {
+		return nil, ErrorCode(errorInvalidParam)
+	}
 	var handle *C.libusb_device_handle
 	err := C.libusb_open(dev.libusbDevice, &handle)
 	if err != 0 {
@@ -152,6 +170,9 @@ func (dev *Device) Open() (*DeviceHandle, error) {
 // libusb-1.0.16, LIBUSB_API_VERSION >= 0x01000102, this function always
 // succeeds." (Source: libusb docs)
 func (dev *Device) DeviceDescriptor() (*Descriptor, error) {
+	if dev == nil || dev.libusbDevice == nil {
+		return nil, ErrorCode(errorInvalidParam)
+	}
 	var desc C.struct_libusb_device_descriptor
 	err := C.libusb_get_device_descriptor(dev.libusbDevice, &desc)
 	if err != 0 {
@@ -176,17 +197,13 @@ func (dev *Device) DeviceDescriptor() (*Descriptor, error) {
 	return &deviceDescriptor, nil
 }
 
-// ActiveConfigDescriptor "gets the USB configuration descriptor for the
-// currently active configuration. This is a non-blocking function which does
-// not involve any requests being sent to the device." (Source: libusb docs)
-func (dev *Device) ActiveConfigDescriptor() (*ConfigDescriptor, error) {
-	var config *C.struct_libusb_config_descriptor
-	err := C.libusb_get_active_config_descriptor(dev.libusbDevice, &config)
-	if err != 0 {
-		return nil, ErrorCode(err)
-	}
-	defer C.libusb_free_config_descriptor(config)
-	activeConfiguration := &ConfigDescriptor{
+// parseConfigDescriptor converts a C libusb_config_descriptor into a Go
+// ConfigDescriptor, fully populating SupportedInterfaces with all interface
+// and endpoint descriptors.
+func parseConfigDescriptor(
+	config *C.struct_libusb_config_descriptor,
+) *ConfigDescriptor {
+	cd := &ConfigDescriptor{
 		Length:               int(config.bLength),
 		DescriptorType:       descriptorType(config.bDescriptorType),
 		TotalLength:          uint16(config.wTotalLength),
@@ -194,116 +211,105 @@ func (dev *Device) ActiveConfigDescriptor() (*ConfigDescriptor, error) {
 		ConfigurationValue:   uint8(config.bConfigurationValue),
 		ConfigurationIndex:   uint8(config.iConfiguration),
 		Attributes:           uint8(config.bmAttributes),
-		MaxPowerMilliAmperes: 2 * uint(config.MaxPower), // Convert from 2 mA to just mA
-		SupportedInterfaces:  nil,
+		MaxPowerMilliAmperes: 2 * uint(config.MaxPower),
 	}
-	var cInterface *C.struct_libusb_interface = config._interface
-	length := activeConfiguration.NumInterfaces
-	libusbInterfaces := unsafe.Slice(cInterface, length)
-	// hdr := reflect.SliceHeader{
-	// 	Data: uintptr(unsafe.Pointer(cInterface)),
-	// 	Len:  length,
-	// 	Cap:  length,
-	// }
-	// libusbInterfaces := *(*[]C.struct_libusb_interface)(unsafe.Pointer(&hdr))
-
-	var supportedInterfaces SupportedInterfaces
-	// Loop through the array of interfaces support by this configuration
-	// const struct libusb_interface * interface
+	numInterfaces := cd.NumInterfaces
+	if numInterfaces == 0 {
+		return cd
+	}
+	libusbInterfaces := unsafe.Slice(config._interface, numInterfaces)
+	supportedInterfaces := make(SupportedInterfaces, 0, numInterfaces)
 	for _, libusbInterface := range libusbInterfaces {
+		numAlt := int(libusbInterface.num_altsetting)
 		supportedInterface := SupportedInterface{
-			NumAltSettings:       int(libusbInterface.num_altsetting),
-			InterfaceDescriptors: nil,
+			NumAltSettings: numAlt,
 		}
-		var interfaceDescriptors InterfaceDescriptors
-		var cInterfaceDescriptor *C.struct_libusb_interface_descriptor = libusbInterface.altsetting
-		length := int(libusbInterface.num_altsetting)
-		libusbInterfaceDescriptors := unsafe.Slice(cInterfaceDescriptor, length)
-		// hdr := reflect.SliceHeader{
-		// 	Data: uintptr(unsafe.Pointer(cInterfaceDescriptor)),
-		// 	Len:  length,
-		// 	Cap:  length,
-		// }
-		// libusbInterfaceDescriptors := *(*[]C.struct_libusb_interface_descriptor)(unsafe.Pointer(&hdr))
-
-		// Loop through the array of interface descriptors
-		// const struct libusb_interface_descriptor * altsetting
-		for _, libusbInterfaceDescriptor := range libusbInterfaceDescriptors {
-			interfaceDescriptor := InterfaceDescriptor{
-				Length:              int(libusbInterfaceDescriptor.bLength),
-				DescriptorType:      descriptorType(libusbInterfaceDescriptor.bDescriptorType),
-				InterfaceNumber:     int(libusbInterfaceDescriptor.bInterfaceNumber),
-				AlternateSetting:    int(libusbInterfaceDescriptor.bAlternateSetting),
-				NumEndpoints:        int(libusbInterfaceDescriptor.bNumEndpoints),
-				InterfaceClass:      uint8(libusbInterfaceDescriptor.bInterfaceClass),
-				InterfaceSubClass:   uint8(libusbInterfaceDescriptor.bInterfaceSubClass),
-				InterfaceProtocol:   uint8(libusbInterfaceDescriptor.bInterfaceProtocol),
-				InterfaceIndex:      int(libusbInterfaceDescriptor.iInterface),
-				EndpointDescriptors: nil,
+		if numAlt == 0 {
+			supportedInterfaces = append(supportedInterfaces, &supportedInterface)
+			continue
+		}
+		libusbInterfaceDescriptors := unsafe.Slice(
+			libusbInterface.altsetting, numAlt,
+		)
+		interfaceDescriptors := make(InterfaceDescriptors, 0, numAlt)
+		for _, lid := range libusbInterfaceDescriptors {
+			ifaceDesc := InterfaceDescriptor{
+				Length:            int(lid.bLength),
+				DescriptorType:    descriptorType(lid.bDescriptorType),
+				InterfaceNumber:   int(lid.bInterfaceNumber),
+				AlternateSetting:  int(lid.bAlternateSetting),
+				NumEndpoints:      int(lid.bNumEndpoints),
+				InterfaceClass:    uint8(lid.bInterfaceClass),
+				InterfaceSubClass: uint8(lid.bInterfaceSubClass),
+				InterfaceProtocol: uint8(lid.bInterfaceProtocol),
+				InterfaceIndex:    int(lid.iInterface),
 			}
-			var endpointDescriptors EndpointDescriptors
-			var cEndpointDescriptor *C.struct_libusb_endpoint_descriptor = libusbInterfaceDescriptor.endpoint
-			length := int(libusbInterfaceDescriptor.bNumEndpoints)
-			libusbEndpointDescriptors := unsafe.Slice(cEndpointDescriptor, length)
-			// hdr := reflect.SliceHeader{
-			// 	Data: uintptr(unsafe.Pointer(cEndpointDescriptor)),
-			// 	Len:  length,
-			// 	Cap:  length,
-			// }
-
-			// libusbEndpointDescriptors := *(*[]C.struct_libusb_endpoint_descriptor)(unsafe.Pointer(&hdr))
-
-			// Loop through the array of endpoint descriptors
-			// const struct libusb_endpoint_descriptor * endpoint
-			for _, libusbEndpointDescriptor := range libusbEndpointDescriptors {
-				endpointDescriptor := EndpointDescriptor{
-					Length:          int(libusbEndpointDescriptor.bLength),
-					DescriptorType:  descriptorType(libusbEndpointDescriptor.bDescriptorType),
-					EndpointAddress: endpointAddress(libusbEndpointDescriptor.bEndpointAddress),
-					Attributes:      endpointAttributes(libusbEndpointDescriptor.bmAttributes),
-					MaxPacketSize:   uint16(libusbEndpointDescriptor.wMaxPacketSize),
-					Interval:        uint8(libusbEndpointDescriptor.bInterval),
+			numEP := int(lid.bNumEndpoints)
+			if numEP > 0 {
+				libusbEndpoints := unsafe.Slice(lid.endpoint, numEP)
+				epDescs := make(EndpointDescriptors, 0, numEP)
+				for _, lep := range libusbEndpoints {
+					epDescs = append(epDescs, &EndpointDescriptor{
+						Length:          int(lep.bLength),
+						DescriptorType:  descriptorType(lep.bDescriptorType),
+						EndpointAddress: endpointAddress(lep.bEndpointAddress),
+						Attributes:      endpointAttributes(lep.bmAttributes),
+						MaxPacketSize:   uint16(lep.wMaxPacketSize),
+						Interval:        uint8(lep.bInterval),
+					})
 				}
-				endpointDescriptors = append(endpointDescriptors, &endpointDescriptor)
+				ifaceDesc.EndpointDescriptors = epDescs
 			}
-			interfaceDescriptor.EndpointDescriptors = endpointDescriptors
-			interfaceDescriptors = append(interfaceDescriptors, &interfaceDescriptor)
+			interfaceDescriptors = append(interfaceDescriptors, &ifaceDesc)
 		}
 		supportedInterface.InterfaceDescriptors = interfaceDescriptors
 		supportedInterfaces = append(supportedInterfaces, &supportedInterface)
 	}
-	activeConfiguration.SupportedInterfaces = supportedInterfaces
-	return activeConfiguration, nil
+	cd.SupportedInterfaces = supportedInterfaces
+	return cd
+}
+
+// ActiveConfigDescriptor "gets the USB configuration descriptor for the
+// currently active configuration. This is a non-blocking function which does
+// not involve any requests being sent to the device." (Source: libusb docs)
+func (dev *Device) ActiveConfigDescriptor() (*ConfigDescriptor, error) {
+	if dev == nil || dev.libusbDevice == nil {
+		return nil, ErrorCode(errorInvalidParam)
+	}
+	var config *C.struct_libusb_config_descriptor
+	err := C.libusb_get_active_config_descriptor(dev.libusbDevice, &config)
+	if err != 0 {
+		return nil, ErrorCode(err)
+	}
+	defer C.libusb_free_config_descriptor(config)
+	return parseConfigDescriptor(config), nil
 }
 
 // ConfigDescriptor "gets a USB configuration descriptor based on its index.
 // This is a non-blocking function which does not involve any requests being
 // sent to the device." (Source: libusb docs)
 func (dev *Device) ConfigDescriptor(configIndex int) (*ConfigDescriptor, error) {
+	if dev == nil || dev.libusbDevice == nil {
+		return nil, ErrorCode(errorInvalidParam)
+	}
 	var cConfig *C.struct_libusb_config_descriptor
-	err := C.libusb_get_config_descriptor(dev.libusbDevice, C.uint8_t(configIndex), &cConfig)
+	err := C.libusb_get_config_descriptor(
+		dev.libusbDevice, C.uint8_t(configIndex), &cConfig,
+	)
 	if err != 0 {
 		return nil, ErrorCode(err)
 	}
 	defer C.libusb_free_config_descriptor(cConfig)
-	configuration := &ConfigDescriptor{
-		Length:               int(cConfig.bLength),
-		DescriptorType:       descriptorType(cConfig.bDescriptorType),
-		TotalLength:          uint16(cConfig.wTotalLength),
-		NumInterfaces:        int(cConfig.bNumInterfaces),
-		ConfigurationValue:   uint8(cConfig.bConfigurationValue),
-		ConfigurationIndex:   uint8(cConfig.iConfiguration),
-		Attributes:           uint8(cConfig.bmAttributes),
-		MaxPowerMilliAmperes: 2 * uint(cConfig.MaxPower), // Convert from 2 mA to just mA
-		SupportedInterfaces:  nil,
-	}
-	return configuration, nil
+	return parseConfigDescriptor(cConfig), nil
 }
 
 // ConfigDescriptorByValue gets "a USB configuration descriptor with a
 // specific bConfigurationValue. This is a non-blocking function which does not
 // involve any requests being sent to the device. (Source: libusb docs)
 func (dev *Device) ConfigDescriptorByValue(configValue int) (*ConfigDescriptor, error) {
+	if dev == nil || dev.libusbDevice == nil {
+		return nil, ErrorCode(errorInvalidParam)
+	}
 	var cConfig *C.struct_libusb_config_descriptor
 	err := C.libusb_get_config_descriptor_by_value(
 		dev.libusbDevice, C.uint8_t(configValue), &cConfig,
@@ -312,18 +318,7 @@ func (dev *Device) ConfigDescriptorByValue(configValue int) (*ConfigDescriptor, 
 		return nil, ErrorCode(err)
 	}
 	defer C.libusb_free_config_descriptor(cConfig)
-	configuration := &ConfigDescriptor{
-		Length:               int(cConfig.bLength),
-		DescriptorType:       descriptorType(cConfig.bDescriptorType),
-		TotalLength:          uint16(cConfig.wTotalLength),
-		NumInterfaces:        int(cConfig.bNumInterfaces),
-		ConfigurationValue:   uint8(cConfig.bConfigurationValue),
-		ConfigurationIndex:   uint8(cConfig.iConfiguration),
-		Attributes:           uint8(cConfig.bmAttributes),
-		MaxPowerMilliAmperes: 2 * uint(cConfig.MaxPower), // Convert from 2 mA to just mA
-		SupportedInterfaces:  nil,
-	}
-	return configuration, nil
+	return parseConfigDescriptor(cConfig), nil
 }
 
 // FindInterfacesByClass finds all interfaces that match the given USB class code.
@@ -359,7 +354,12 @@ func (dev *Device) ConfigDescriptorByValue(configValue int) (*ConfigDescriptor, 
 //			}
 //		}
 //	}
-func (dev *Device) FindInterfacesByClass(class uint8) (InterfaceDescriptors, error) {
+func (dev *Device) FindInterfacesByClass(
+	class uint8,
+) (InterfaceDescriptors, error) {
+	if dev == nil || dev.libusbDevice == nil {
+		return nil, ErrorCode(errorInvalidParam)
+	}
 	config, err := dev.ActiveConfigDescriptor()
 	if err != nil {
 		return nil, err
