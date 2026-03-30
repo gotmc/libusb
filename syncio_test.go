@@ -9,9 +9,90 @@ import (
 	"testing"
 )
 
-// Note: Most syncio functions call libusb C functions directly and will segfault
-// with nil or invalid pointers. Testing error conditions would require valid
-// libusb context and device setup, which is beyond unit testing scope.
+func TestBulkTransferNilHandle(t *testing.T) {
+	var dh *DeviceHandle
+	_, err := dh.BulkTransfer(0, nil, 0, 0)
+	if err != ErrorCode(errorInvalidParam) {
+		t.Errorf("BulkTransfer: got %v, want errorInvalidParam", err)
+	}
+}
+
+func TestBulkTransferNilInternalPointer(t *testing.T) {
+	dh := &DeviceHandle{}
+	_, err := dh.BulkTransfer(0, nil, 0, 0)
+	if err != ErrorCode(errorInvalidParam) {
+		t.Errorf("BulkTransfer: got %v, want errorInvalidParam", err)
+	}
+}
+
+func TestBulkTransferOutNilHandle(t *testing.T) {
+	var dh *DeviceHandle
+	_, err := dh.BulkTransferOut(0, nil, 0)
+	if err != ErrorCode(errorInvalidParam) {
+		t.Errorf("BulkTransferOut: got %v, want errorInvalidParam", err)
+	}
+}
+
+func TestBulkTransferInNilHandle(t *testing.T) {
+	var dh *DeviceHandle
+	_, _, err := dh.BulkTransferIn(0, 64, 0)
+	if err != ErrorCode(errorInvalidParam) {
+		t.Errorf("BulkTransferIn: got %v, want errorInvalidParam", err)
+	}
+}
+
+func TestControlTransferNilHandle(t *testing.T) {
+	var dh *DeviceHandle
+	_, err := dh.ControlTransfer(0, 0, 0, 0, nil, 0, 0)
+	if err != ErrorCode(errorInvalidParam) {
+		t.Errorf("ControlTransfer: got %v, want errorInvalidParam", err)
+	}
+}
+
+func TestControlTransferWithTypesNilHandle(t *testing.T) {
+	var dh *DeviceHandle
+	_, err := dh.ControlTransferWithTypes(
+		HostToDevice, Standard, DeviceRecipient,
+		0, 0, 0, nil, 0, 0,
+	)
+	if err != ErrorCode(errorInvalidParam) {
+		t.Errorf(
+			"ControlTransferWithTypes: got %v, want errorInvalidParam", err,
+		)
+	}
+}
+
+func TestControlOutNilHandle(t *testing.T) {
+	var dh *DeviceHandle
+	_, err := dh.ControlOut(Standard, DeviceRecipient, 0, 0, 0, nil, 0)
+	if err != ErrorCode(errorInvalidParam) {
+		t.Errorf("ControlOut: got %v, want errorInvalidParam", err)
+	}
+}
+
+func TestControlInNilHandle(t *testing.T) {
+	var dh *DeviceHandle
+	_, err := dh.ControlIn(Standard, DeviceRecipient, 0, 0, 0, nil, 64, 0)
+	if err != ErrorCode(errorInvalidParam) {
+		t.Errorf("ControlIn: got %v, want errorInvalidParam", err)
+	}
+}
+
+func TestInterruptTransferNilHandle(t *testing.T) {
+	var dh *DeviceHandle
+	_, err := dh.InterruptTransfer(0, nil, 0, 0)
+	if err != ErrorCode(errorInvalidParam) {
+		t.Errorf("InterruptTransfer: got %v, want errorInvalidParam", err)
+	}
+}
+
+func TestInterruptTransferNilInternalPointer(t *testing.T) {
+	dh := &DeviceHandle{}
+	_, err := dh.InterruptTransfer(0, nil, 0, 0)
+	if err != ErrorCode(errorInvalidParam) {
+		t.Errorf("InterruptTransfer: got %v, want errorInvalidParam", err)
+	}
+}
 
 func TestBitmapRequestType(t *testing.T) {
 	// Test building request type bitmap
