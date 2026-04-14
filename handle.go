@@ -9,7 +9,9 @@ package libusb
 // #include <libusb.h>
 import "C"
 import (
+	"encoding/binary"
 	"runtime"
+	"unicode/utf16"
 	"unsafe"
 )
 
@@ -65,12 +67,21 @@ func (dh *DeviceHandle) StringDescriptor(
 		return "", ErrorCode(usberr)
 	}
 
-	// Convert to Go string
-	if len(cData) > 0 {
-		data := (*C.char)(unsafe.Pointer(&cData[0]))
-		return C.GoString(data), nil
+	data := C.GoBytes(unsafe.Pointer(dataPtr), C.int(usberr))
+	if len(data) <= 2 {
+		return "", nil
 	}
-	return "", nil
+
+	utf16Data := data[2:]
+	if len(utf16Data)%2 != 0 {
+		utf16Data = utf16Data[:len(utf16Data)-1]
+	}
+
+	codeUnits := make([]uint16, len(utf16Data)/2)
+	for i := range codeUnits {
+		codeUnits[i] = binary.LittleEndian.Uint16(utf16Data[i*2:])
+	}
+	return string(utf16.Decode(codeUnits)), nil
 }
 
 // StringDescriptorASCII retrieve(s) a string descriptor in C style ASCII.
@@ -90,7 +101,7 @@ func (dh *DeviceHandle) StringDescriptorASCII(
 	if len(data) > 0 {
 		dataPtr = (*C.uchar)(unsafe.Pointer(&data[0]))
 	}
-	bytesRead, err := C.libusb_get_string_descriptor_ascii(
+	bytesRead := C.libusb_get_string_descriptor_ascii(
 		dh.libusbDeviceHandle,
 		C.uint8_t(descIndex),
 		// Unsafe pointer -> https://stackoverflow.com/a/16376039/95592
@@ -98,10 +109,6 @@ func (dh *DeviceHandle) StringDescriptorASCII(
 		C.int(length),
 	)
 
-	// Check both bytesRead and err
-	if err != nil {
-		return "", err
-	}
 	if bytesRead < 0 {
 		return "", ErrorCode(bytesRead)
 	}
